@@ -22,6 +22,11 @@ Route::get('test', function () {
 
 });
 
+Route::get('fetch-products', function () {
+    // run job
+    \App\Jobs\GetVendorProducts::dispatch();
+});
+
 Route::get('/', function () {
     return view('welcome');
 });
