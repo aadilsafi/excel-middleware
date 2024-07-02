@@ -55,6 +55,19 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
+        'rsr' => [
+            'driver' => 'ftp',
+            'host' => env('RSR_HOST'),
+            'username' => env('RSR_USERNAME'),
+            'password' => env('RSR_PASSWORD'),
+
+            // Optional RSR settings...
+            'port' => (int) env('RSR_PORT', 2222),
+            'root' => env('RSR_ROOT', '/'),
+            'passive'    => true,
+            'ssl'        => true,
+            'timeout' => 800,
+        ],
 
     ],
 
