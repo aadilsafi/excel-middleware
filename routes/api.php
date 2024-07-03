@@ -1,10 +1,11 @@
 <?php
 
-use App\Mail\FilesReport;
 use App\Models\Order;
 use App\Models\Product;
-use Illuminate\Http\Request;
+use App\Mail\FilesReport;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
@@ -60,27 +61,54 @@ Route::post('test', function (Request $request) {
     $items = preg_replace('/(?<=[a-zA-Z])"(?=[a-zA-Z])/', "'", $items);
 
     $items = json_decode($items, true);
-    if(!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))){
+    if (!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))) {
         return response()->json(['error' => 'Vendor is not RSR.'], 404);
     }
     Log::info(json_encode($request->all()));
-    Log::info('billing : ' . json_encode($request->BillingAddress, true));
+    Log::info('Shipping : ' . json_encode($request->ShippingAddress, true));
     Log::info('items : ' . json_encode($items));
-    $billingAddress = $request->BillingAddress;
+    $ShippingAddress = $request->ShippingAddress;
     $date = date('Ymd');
     // quantity with the leading zeros if needed
     $quantity = str_pad(1, 5, '0', STR_PAD_LEFT);
     $order_id = $request->id;
     $source_id  = $order_id; //$request->OrderSourceOrderID;
-    $FirstName = $billingAddress['FirstName'];
-    $LastName = $billingAddress['LastName'];
-    $StreetLine1 = $billingAddress['StreetLine1'];
-    $StreetLine2 = $billingAddress['StreetLine2'];
-    $City = $billingAddress['City'];
-    $StateName = $billingAddress['StateName'];
-    $PostalCode = $billingAddress['PostalCode'];
-    $PhoneNumber = $billingAddress['PhoneNumber'];
+    $FirstName = $ShippingAddress['FirstName'];
+    $MiddleInitial = $ShippingAddress['MiddleInitial'];
+    $LastName = $ShippingAddress['LastName'];
+    $StreetLine1 = $ShippingAddress['StreetLine1'];
+    $StreetLine2 = $ShippingAddress['StreetLine2'];
+    $City = $ShippingAddress['City'];
+    $StateName = $ShippingAddress['StateName'];
+    $PostalCode = $ShippingAddress['PostalCode'];
+    $PhoneNumber = $ShippingAddress['PhoneNumber'];
+    $PhoneNumber = substr($PhoneNumber, 0, 10);
+    $combinedString = $FirstName . ' ' . $MiddleInitial . ' ' . $LastName;
+
+
+        // Check if the combined string contains "PO"
+        if (Str::contains($combinedString, 'PO')) {
+            // Find the position of "PO"
+            $poPosition = strpos($combinedString, 'PO');
+
+            // Get the part before "PO" or up to the first 25 characters, whichever is shorter
+            $FirstName = substr($combinedString, 0, min(25, $poPosition));
+
+            // Get the rest of the string starting from "PO"
+            $remainingString = substr($combinedString, $poPosition);
+
+            // Ensure LastName is no more than 25 characters
+            $LastName = substr($remainingString, 0, 25);
+        } else {
+            // If "PO" is not found, handle accordingly
+            $FirstName = substr($combinedString, 0, 25);
+            $LastName = '';
+        }
+    Log::info($FirstName);
+    Log::info($LastName);
     $total_quantity = 0;
+
+    Log::info($PhoneNumber);
     $sequence = DB::table('order_sequences')->lockForUpdate()->first();
 
     $newSequence = $sequence->current_sequence + 1;
@@ -89,12 +117,12 @@ Route::post('test', function (Request $request) {
 
     $newSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
 
-    $content = "FILEHEADER;00;46530;$date;$newSequence\n$source_id;10;$FirstName $LastName;;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;Info@thesuppliesnmore.com;;\n";
+    $content = "FILEHEADER;00;46530;$date;$newSequence\n$source_id;10;$FirstName;$LastName;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;Info@thesuppliesnmore.com;;\n";
     foreach ($items as $item) {
         Log::info($item['ProductID']);
         $vendorSKU = Product::where('ProductSKU', $item['ProductID'])->first()?->VendorSKU;
-        if(!$vendorSKU){
-            Mail::to('test@test.com')->send(new FilesReport(null,['heading' => 'Vendor Sku not Found' , 'body' => 'this Vendor was not on our database ','title' => 'Vendor Sku not found']));
+        if (!$vendorSKU) {
+            Mail::to('test@test.com')->send(new FilesReport(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']));
             return;
         }
         $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);
