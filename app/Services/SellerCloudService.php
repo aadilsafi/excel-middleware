@@ -30,7 +30,7 @@ class SellerCloudService implements SellerCloudInterface
             'Content-Type' => 'application/json',
         ];
         $this->client = new Client();
-        $this->token = Cache::remember('seller_cloud_token', 3600, function () {
+        $this->token = Cache::remember('seller_cloud_token', 2000, function () {
             $response = $this->client->post($this->baseUrl . 'token', [
                 'headers' => $this->headers,
                 'json' => [
