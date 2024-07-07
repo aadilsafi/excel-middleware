@@ -26,8 +26,6 @@ class SellerCloudService implements SellerCloudInterface
         $this->baseUrl = 'https://ci.api.sellercloud.com/rest/api/';
         $this->username = env('SELLER_CLOUD_USERNAME');
         $this->password = env('SELLER_CLOUD_PASSWORD');
-        \Log::info('SELLER_CLOUD_USERNAME: ' . $this->username);
-        \Log::info('SELLER_CLOUD_PASSWORD: ' . $this->password);
         $this->headers = [
             'Content-Type' => 'application/json',
         ];
