@@ -92,7 +92,6 @@ class SellerCloudService implements SellerCloudInterface
         ])->render();
 
         // Send the request to Zapier
-        $client = new Client();
         $email_setup = [
             [
                 'name'     => 'htmlContent',
@@ -109,7 +108,7 @@ class SellerCloudService implements SellerCloudInterface
                 'filename' => $file['name']
             ];
         }
-        $response = $client->post('https://hooks.zapier.com/hooks/catch/19222741/23hglr5/', [
+        $response = $this->client->post('https://hooks.zapier.com/hooks/catch/19222741/23hglr5/', [
             'multipart' => $email_setup
         ]);
 
