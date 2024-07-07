@@ -53,8 +53,8 @@ class ProcessOrderFiles extends Command
                 $tracker = $this->getTracking($file_content);
                 $tracking_number = $tracker[0];
                 $invoice_number  = $tracker[1];
-                $source_id = $tracker[2];
-                $order_id = Order::where('order_source_id', $source_id)->first()->order_id;
+                $order_id = $tracker[2];
+                // $order_id = Order::where('order_source_id', $source_id)->first()->order_id;
                 // Output the extracted data
                 if ($tracking_number && $invoice_number) {
                     $this->info("Tracking Number: $tracking_number");
@@ -70,6 +70,7 @@ class ProcessOrderFiles extends Command
                         $file_date = Carbon::now();
                     }
                     $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
+                    // last column is warehouse id default is 255 for RSR Dropship
                     $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number, 'FedEx', 'FedEx 2Day');
                 } else {
                     $this->error('Tracking number or invoice number not found.');
@@ -78,7 +79,7 @@ class ProcessOrderFiles extends Command
                 Mail::to('test@test.com')->send(new FilesReport($attachment));
             }
             Storage::disk('local')->delete($file);
-            Storage::disk('rsr')->delete($file);
+            // Storage::disk('rsr')->delete($file);
         }
 
 
@@ -98,13 +99,13 @@ class ProcessOrderFiles extends Command
         // Initialize variables to store the tracking number and invoice number
         $trackingNumber = '';
         $invoiceNumber = '';
-        $sourceId = '';
+        $orderId = '';
         // Loop through each line and find the relevant data
         foreach ($lines as $line) {
             if (strpos($line, ';60;') !== false) {
                 $parts = explode(';', $line);
                 if (count($parts) > 4) {
-                    $sourceId = trim($parts[0]);
+                    $orderId = trim($parts[0]);
                     $trackingNumber = trim($parts[3]);
                     $invoiceNumber = trim($parts[4]);
                     break; // Exit loop once found
@@ -112,6 +113,6 @@ class ProcessOrderFiles extends Command
             }
         }
 
-        return [$trackingNumber, $invoiceNumber, $sourceId];
+        return [$trackingNumber, $invoiceNumber, $orderId];
     }
 }

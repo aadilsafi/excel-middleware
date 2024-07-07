@@ -69,10 +69,10 @@ Route::post('test', function (Request $request) {
     Log::info('items : ' . json_encode($items));
     $ShippingAddress = $request->ShippingAddress;
     $date = date('Ymd');
+    return;
     // quantity with the leading zeros if needed
     $quantity = str_pad(1, 5, '0', STR_PAD_LEFT);
-    $order_id = $request->id;
-    $source_id  = $order_id; //$request->OrderSourceOrderID;
+    $source_id  = $request->id; //$request->OrderSourceOrderID;
     $FirstName = $ShippingAddress['FirstName'];
     $MiddleInitial = $ShippingAddress['MiddleInitial'];
     $LastName = $ShippingAddress['LastName'];
@@ -129,6 +129,8 @@ Route::post('test', function (Request $request) {
         $content .= "$source_id;20;$vendorSKU;$quantity;FedEx;Grnd\n";
         $total_quantity += $item['Qty'];
     }
+    Log::info($content);
+    // return;
     $total_quantity = str_pad($total_quantity, 5, '0', STR_PAD_LEFT);
 
     $content .= "$source_id;90;$total_quantity\nFILETRAILER;99;00001";
@@ -161,16 +163,6 @@ Route::post('test', function (Request $request) {
     // check if the file is uploaded
     $ftp_file = Storage::disk('rsr')->put($ftpPath, $fileContent);
     if ($ftp_file) {
-        Order::updateOrCreate(
-            [
-                'order_id' => $order_id,
-                'order_source_id' => $source_id,
-            ],
-            [
-                'order_id' => $order_id,
-                'order_source_id' => $source_id,
-            ]
-        );
         Log::info('file uploaded to FTP Order');
     } else {
         Log::info('file not uploaded to FTP Order');
