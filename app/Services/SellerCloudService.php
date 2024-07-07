@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Mail\FilesReport;
 use App\Services\Interfaces\SellerCloudInterface;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Storage;
 
 class SellerCloudService implements SellerCloudInterface
 {
@@ -61,9 +62,8 @@ class SellerCloudService implements SellerCloudInterface
 
         return json_decode($response->getBody(), true)['Items'];
     }
-    public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name, $shipping_method,$warehouses_id = 255)
+    public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name, $shipping_method, $warehouses_id = 255)
     {
-        // dd($this->headers);
         $response = $this->client->put($this->baseUrl . "Orders/ShippingStatus/SinglePackage", [
             'headers' => $this->headers,
             'json' => [
@@ -77,5 +77,46 @@ class SellerCloudService implements SellerCloudInterface
             ],
         ]);
         return json_decode($response->getBody(), true);
+    }
+    public function sendEmail(
+        $file = null,
+        $data = ['body' => '','heading' => '','title' => ''],
+    ) {
+         // Render the view content
+         $emailContent = view('emails.files_report', [
+            'title' => $data['title']?? '',
+            'heading' => $data['heading']?? '',
+            'body' => $data['body']?? ''
+        ])->render();
+
+        // Send the request to Zapier
+        $client = new Client();
+        $email_setup = [
+            [
+                'name'     => 'htmlContent',
+                'contents' => $emailContent
+            ]
+        ];
+
+        // Conditionally add the attachment if it exists
+        if ($file) {
+            $file_content = $file['content'];
+            $email_setup[] = [
+                'name'     => 'attachment',
+                'contents' => $file_content,
+                'filename' => $file['name']
+            ];
+        }
+        $response = $client->post('https://hooks.zapier.com/hooks/catch/19222741/23hglr5/', [
+            'multipart' => $email_setup
+        ]);
+
+        if ($response->getStatusCode() == 200) {
+            Log::info('Successfully sent to Zapier');
+        } else {
+            Log::error('Failed to send to Zapier');
+        }
+
+        return response()->json(['status' => 'success']);
     }
 }

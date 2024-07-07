@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Models\Product;
 use App\Mail\FilesReport;
+use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -22,29 +23,9 @@ use Illuminate\Support\Facades\Storage;
 |
 */
 
-Route::get('test1', function () {
-
-    dd(str_pad(1, 4, '0', STR_PAD_LEFT));
-    // Define the local path
-    $localPath = 'local_uploads/test_file.txt';
-
-    // Check if the local file exists
-    if (!Storage::disk('local')->exists($localPath)) {
-        return response()->json(['error' => 'Local file does not exist.'], 404);
-    }
-
-    // Get the file content
-    $fileContent = Storage::disk('local')->get($localPath);
-
-    // Define the FTP path
-    $ftpPath = 'eo/incoming/test_file.txt';
-
-    // Upload the file to FTP
-    Storage::disk('rsr')->put($ftpPath, $fileContent);
-
-    return response()->json(['message' => 'File has been copied to the FTP server successfully.']);
-});
 Route::post('test', function (Request $request) {
+    $sellerCloudService = new \App\Services\SellerCloudService();
+
     $items = $request->Items;
     // Convert single quotes to double quotes
     $items = str_replace("'", "\"", $items);
@@ -122,7 +103,8 @@ Route::post('test', function (Request $request) {
         Log::info($item['ProductID']);
         $vendorSKU = Product::where('ProductSKU', $item['ProductID'])->first()?->VendorSKU;
         if (!$vendorSKU) {
-            Mail::to('test@test.com')->send(new FilesReport(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']));
+            $sellerCloudService->sendEmail(null,['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']);
+            // Mail::to('test@test.com')->send(new FilesReport(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']));
             return;
         }
         $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);

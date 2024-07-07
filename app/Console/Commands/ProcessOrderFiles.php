@@ -42,6 +42,7 @@ class ProcessOrderFiles extends Command
             $file_content = Storage::disk('local')->get($file);
             $attachment = [
                 'path' => $filePath,
+                'content' => $file_content,
                 'name' => basename($file),
                 'mime' => Storage::disk('local')->mimeType($file) ?? 'text/plain',
             ];
@@ -76,10 +77,11 @@ class ProcessOrderFiles extends Command
                     $this->error('Tracking number or invoice number not found.');
                 }
             } else {
-                Mail::to('test@test.com')->send(new FilesReport($attachment));
+                $sellerCloudService->sendEmail($attachment);
+                // Mail::to('test@test.com')->send(new FilesReport($attachment));
             }
             Storage::disk('local')->delete($file);
-            // Storage::disk('rsr')->delete($file);
+            Storage::disk('rsr')->delete($file);
         }
 
 

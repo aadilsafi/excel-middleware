@@ -19,7 +19,7 @@ class FilesReport extends Mailable
      */
     public function __construct($file = null,$data = ['body' => '','heading' => '','title' => ''])
     {
-        $this->file = $file;
+        // $this->file = $file;
         $this->data = $data;
     }
 
@@ -31,12 +31,12 @@ class FilesReport extends Mailable
     public function build()
     {
         $email = $this->view('emails.files_report',$this->data);
-        if ($this->file) {
-            $email->attach($this->file['path'], [
-                'as' => $this->file['name'],
-                'mime' => $this->file['mime'],
-            ]);
-        }
+        // if ($this->file) {
+        //     $email->attach($this->file['path'], [
+        //         'as' => $this->file['name'],
+        //         'mime' => $this->file['mime'],
+        //     ]);
+        // }
 
         return $email;
     }
