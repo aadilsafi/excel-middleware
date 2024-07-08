@@ -45,7 +45,7 @@ Route::post('test', function (Request $request) {
     if (!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))) {
         Log::info('Venor is not RSR');
         $sellerCloudService->sendEmail(null,[
-            'body' => 'This Order is not from RSR Vendor',
+            'body' => 'This Order is not from RSR Vendor Order ID is => '.$request->id,
             'title' => 'Not RSR Order',
             'heading' => 'Not RSR Order',
         ]);
@@ -108,7 +108,7 @@ Route::post('test', function (Request $request) {
         Log::info($item['ProductID']);
         $vendorSKU = Product::where('ProductSKU', $item['ProductID'])->first()?->VendorSKU;
         if (!$vendorSKU) {
-            $sellerCloudService->sendEmail(null,['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']);
+            $sellerCloudService->sendEmail(null,['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database Order ID is => '.$request->id, 'title' => 'Vendor Sku not found']);
             // Mail::to('test@test.com')->send(new FilesReport(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database ', 'title' => 'Vendor Sku not found']));
             return;
         }
