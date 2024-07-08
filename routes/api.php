@@ -44,6 +44,11 @@ Route::post('test', function (Request $request) {
     $items = json_decode($items, true);
     if (!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))) {
         Log::info('Venor is not RSR');
+        $sellerCloudService->sendEmail(null,[
+            'body' => 'This Order is not from RSR Vendor',
+            'title' => 'Not RSR Order',
+            'heading' => 'Not RSR Order',
+        ]);
         return response()->json(['error' => 'Vendor is not RSR.'], 404);
     }
     Log::info(json_encode($request->all()));
