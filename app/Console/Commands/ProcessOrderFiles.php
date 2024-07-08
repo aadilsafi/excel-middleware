@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessOrderFiles extends Command
 {
-    protected $signature = 'order-files:process';
+    protected $signature = 'order-files-process';
     protected $description = 'Read files from a directory, send them as email attachments, and delete them';
 
     public function __construct()
