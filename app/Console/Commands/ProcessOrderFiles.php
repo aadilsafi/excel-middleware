@@ -22,6 +22,7 @@ class ProcessOrderFiles extends Command
 
     public function handle()
     {
+        Log::info('processing ftp files for orders');
         $sellerCloudService = new \App\Services\SellerCloudService();
 
         // Define the FTP directory
