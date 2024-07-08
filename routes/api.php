@@ -43,6 +43,7 @@ Route::post('test', function (Request $request) {
 
     $items = json_decode($items, true);
     if (!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))) {
+        Log::info('Venor is not RSR');
         return response()->json(['error' => 'Vendor is not RSR.'], 404);
     }
     Log::info(json_encode($request->all()));
@@ -50,7 +51,6 @@ Route::post('test', function (Request $request) {
     Log::info('items : ' . json_encode($items));
     $ShippingAddress = $request->ShippingAddress;
     $date = date('Ymd');
-    return;
     // quantity with the leading zeros if needed
     $quantity = str_pad(1, 5, '0', STR_PAD_LEFT);
     $source_id  = $request->id; //$request->OrderSourceOrderID;
