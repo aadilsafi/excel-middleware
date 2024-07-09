@@ -50,8 +50,7 @@ class ProcessOrderFiles extends Command
             // Send email
             if (strpos($filePath, 'ECONF') !== false) {
                 // Just delete
-            }
-            else if (\strpos($filePath, 'ESHIP') !== false) {
+            } else if (\strpos($filePath, 'ESHIP') !== false) {
                 $tracker = $this->getTracking($file_content);
                 $tracking_number = $tracker[0];
                 $invoice_number  = $tracker[1];
@@ -78,7 +77,9 @@ class ProcessOrderFiles extends Command
                     $this->error('Tracking number or invoice number not found.');
                 }
             } else {
-                $sellerCloudService->sendEmail($attachment);
+                $tracker = $this->getTracking($file_content);
+                $order_id = $tracker[2];
+                $sellerCloudService->sendEmail($attachment, ['heading' => 'Order File Error on OrderId => '.$order_id, 'body' => 'Order file attached on OrderId => '.$order_id, 'title' => 'Order File on OrderId => '.$order_id]);
                 // Mail::to('test@test.com')->send(new FilesReport($attachment));
             }
             Storage::disk('local')->delete($file);
@@ -95,7 +96,7 @@ class ProcessOrderFiles extends Command
         $this->info('Files have been processed, emailed, and deleted successfully.');
     }
 
-    public function getTracking($fileContent)
+    public function getTracking($fileContent, $is_error = false)
     {
         $lines = explode(PHP_EOL, $fileContent);
 
@@ -105,13 +106,21 @@ class ProcessOrderFiles extends Command
         $orderId = '';
         // Loop through each line and find the relevant data
         foreach ($lines as $line) {
-            if (strpos($line, ';60;') !== false) {
-                $parts = explode(';', $line);
-                if (count($parts) > 4) {
+            if ($is_error) {
+                if (strpos($line, ';90;') !== false) {
+                    $parts = explode(';', $line);
                     $orderId = trim($parts[0]);
-                    $trackingNumber = trim($parts[3]);
-                    $invoiceNumber = trim($parts[4]);
                     break; // Exit loop once found
+                }
+            } else {
+                if (strpos($line, ';60;') !== false) {
+                    $parts = explode(';', $line);
+                    if (count($parts) > 4) {
+                        $orderId = trim($parts[0]);
+                        $trackingNumber = trim($parts[3]);
+                        $invoiceNumber = trim($parts[4]);
+                        break; // Exit loop once found
+                    }
                 }
             }
         }
