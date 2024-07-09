@@ -49,7 +49,7 @@ Route::post('test', function (Request $request) {
             'title' => 'Not RSR Order',
             'heading' => 'Not RSR Order',
         ]);
-        return response()->json(['error' => 'Vendor is not RSR.'], 404);
+        return response()->json([], 200);
     }
     Log::info(json_encode($request->all()));
     Log::info('Shipping : ' . json_encode($request->ShippingAddress, true));
