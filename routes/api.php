@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OrderController;
 use App\Models\Order;
 use App\Models\Product;
 use App\Mail\FilesReport;
@@ -22,8 +23,9 @@ use Illuminate\Support\Facades\Storage;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+Route::post('new-order', [OrderController::class,'newOrder'])->name('post-order');
 Route::post('test', function (Request $request) {
+    Log::info('Webhook  Order id => '.$request->id);
     $sellerCloudService = new \App\Services\SellerCloudService();
 
     $items = $request->Items;

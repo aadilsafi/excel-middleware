@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmailController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-
+Route::get('test-emails', [EmailController::class,'readEmails'])->name('read-emails');
 Route::get('test', function () {
     $sellerCloudService = new \App\Services\SellerCloudService();
     $ship_date = Carbon::now()->format('Y-m-d\TH:i:s.v\Z');
