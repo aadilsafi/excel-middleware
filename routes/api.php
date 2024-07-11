@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Storage;
 Route::post('new-order', [OrderController::class,'newOrder'])->name('post-order');
 Route::post('test', function (Request $request) {
     Log::info('Webhook  Order id => '.$request->id);
+    return response()->json([], 200);
     $sellerCloudService = new \App\Services\SellerCloudService();
 
     $items = $request->Items;

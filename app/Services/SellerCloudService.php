@@ -62,7 +62,7 @@ class SellerCloudService implements SellerCloudInterface
 
         return json_decode($response->getBody(), true)['Items'];
     }
-    public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name, $shipping_method, $warehouses_id = 255)
+    public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name = 'FedEx', $shipping_method = 'FedEx 2Day', $warehouses_id = 255)
     {
         $response = $this->client->put($this->baseUrl . "Orders/ShippingStatus/SinglePackage", [
             'headers' => $this->headers,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -11,8 +12,9 @@ class OrderController extends Controller
 {
     public function newOrder (Request $request)
     {
-        $sellerCloudService = new \App\Services\SellerCloudService();
+        Log::info('Webhook  Order id => '.$request->id);
 
+        $sellerCloudService = new \App\Services\SellerCloudService();
         $items = $request->Items;
         // Convert single quotes to double quotes
         $items = str_replace("'", "\"", $items);

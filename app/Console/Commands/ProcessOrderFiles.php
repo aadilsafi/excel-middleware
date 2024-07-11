@@ -75,7 +75,7 @@ class ProcessOrderFiles extends Command
                         }
                         $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
                         // last column is warehouse id default is 255 for RSR Dropship
-                        $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number, 'FedEx', 'FedEx 2Day');
+                        $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number);
                     } else {
                         $this->error('Tracking number or invoice number not found.');
                     }
