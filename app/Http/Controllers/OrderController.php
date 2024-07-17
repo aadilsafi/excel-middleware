@@ -25,6 +25,7 @@ class OrderController extends Controller
         // Log::info('items 1st : ' . json_encode($items));
 
         $items = preg_replace('/"ProductName":\s*"([^"]*)""([^"]*)"",/', '"ProductName": "\1\"\2",', $items);
+        $items = preg_replace('/"ProductName":\s*"([^"]*)""([^"]*)"/', '"ProductName": "\1\"\2"', $items);
 
         Log::info('items 1st.2 : '.\json_encode($items));
 
