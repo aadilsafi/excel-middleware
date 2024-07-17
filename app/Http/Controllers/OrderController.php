@@ -93,6 +93,9 @@ class OrderController extends Controller
             }
             return response()->json([], 200);
         }
+        else{
+            Log::info('items[0] not set ');
+        }
         Log::info('Vendor is not RSR and Seawide');
         $sellerCloudService->sendEmail(null, [
             'body' => 'This Order is not from RSR and Seawide Vendor Order ID is => ' . $request->id,
