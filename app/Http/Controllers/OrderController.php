@@ -20,9 +20,9 @@ class OrderController extends Controller
         $items = $request->Items;
         // Convert single quotes to double quotes
         $items = str_replace("'", "\"", $items);
-        $items = preg_replace('/"ProductName":\s*""(.*?)"",/', '"ProductName": "\1",', $items);
+        // $items = preg_replace('/"ProductName":\s*""(.*?)"",/', '"ProductName": "\1",', $items);
 
-        Log::info('items 1st : ' . json_encode($items));
+        // Log::info('items 1st : ' . json_encode($items));
 
         $items = preg_replace('/"ProductName":\s*"([^"]*)""([^"]*)"",/', '"ProductName": "\1\"\2",', $items);
 
