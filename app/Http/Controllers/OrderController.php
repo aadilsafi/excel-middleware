@@ -43,6 +43,11 @@ class OrderController extends Controller
 
         Log::info('items 4th : ' . json_encode($items));
 
+        $items = preg_replace('/:\s*,/', ': null,', $items);
+        $items = preg_replace('/:\s*}$/', ': null}', $items);
+
+        Log::info('items 4th.2nd : '.\json_encode($items));
+
         $items = preg_replace('/(?<=[a-zA-Z])"(?=[a-zA-Z])/', "'", $items);
 
         Log::info('items 5th : ' . json_encode($items));
