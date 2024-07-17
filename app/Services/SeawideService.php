@@ -152,6 +152,11 @@ class SeawideService
             // Extract the XML from the response
 
             $result = $response->ShipOrderDropShipResult;
+            if(!Str::contains($result, 'OK')){
+                $sellerCloudService = new SellerCloudService();
+                $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' '.json_encode($result), 'title' => 'Seawide error']);
+
+            }
             return Str::contains($result, 'OK');
         } catch (\Exception $e) {
             return false;
