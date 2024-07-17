@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\FilesReport;
 use App\Services\Interfaces\SellerCloudInterface;
+use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -23,6 +24,15 @@ class SellerCloudService implements SellerCloudInterface
     {
 
         // Vendors/15073/products?model.pageNumber=1&model.pageSize=100
+        try {
+            $this->initializeToken();
+            $products = $this->getProducts();
+        } catch (Exception $ex) {
+        }
+    }
+
+    public function initializeToken()
+    {
         $this->baseUrl = 'https://ci.api.sellercloud.com/rest/api/';
         $this->username = env('SELLER_CLOUD_USERNAME');
         $this->password = env('SELLER_CLOUD_PASSWORD');
@@ -43,16 +53,21 @@ class SellerCloudService implements SellerCloudInterface
         });
         $this->headers = Arr::add($this->headers, 'Authorization', 'Bearer ' . $this->token);
     }
-
     public function getProducts($pageNumber = 1, $pageSize = 100, $vendorId = 15073)
     {
         // pass bearer token
+        try {
+            $response = $this->client->get($this->baseUrl . "Vendors/$vendorId/products?model.pageNumber=$pageNumber&model.pageSize=$pageSize", [
+                'headers' => $this->headers,
+            ]);
 
-        $response = $this->client->get($this->baseUrl . "Vendors/$vendorId/products?model.pageNumber=$pageNumber&model.pageSize=$pageSize", [
-            'headers' => $this->headers,
-        ]);
-
-        return json_decode($response->getBody(), true)['Items'];
+            return json_decode($response->getBody(), true)['Items'];
+        } catch (Exception $e) {
+            if ($e->getResponse()->getStatusCode() == 401) {
+                Cache::forget('seller_cloud_token');
+                $this->initializeToken();
+            }
+        }
     }
     public function getOrder()
     {
@@ -80,13 +95,13 @@ class SellerCloudService implements SellerCloudInterface
     }
     public function sendEmail(
         $file = null,
-        $data = ['body' => '','heading' => '','title' => ''],
+        $data = ['body' => '', 'heading' => '', 'title' => ''],
     ) {
-         // Render the view content
-         $emailContent = view('emails.files_report', [
-            'title' => $data['title']?? '',
-            'heading' => $data['heading']?? '',
-            'body' => $data['body']?? ''
+        // Render the view content
+        $emailContent = view('emails.files_report', [
+            'title' => $data['title'] ?? '',
+            'heading' => $data['heading'] ?? '',
+            'body' => $data['body'] ?? ''
         ])->render();
 
         // Send the request to Zapier
