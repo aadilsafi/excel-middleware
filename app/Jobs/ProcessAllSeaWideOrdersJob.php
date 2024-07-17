@@ -17,6 +17,7 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
+    public $timeout = null;
     public function __construct()
     {
         //
