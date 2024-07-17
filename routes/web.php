@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EmailController;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use SoapClient as SoapClient;
 
@@ -17,7 +18,8 @@ use SoapClient as SoapClient;
 */
 
 Route::get('test', function () {
-dd(dispatch(new \App\Jobs\ProcessAllSeaWideOrdersJob()));
+    dd('die');
+    dd(dispatch(new \App\Jobs\ProcessAllSeaWideOrdersJob()));
     $seawideService = new \App\Services\SeawideService();
     $FullPartNo = "YAK060015";
     $Quant = "1";

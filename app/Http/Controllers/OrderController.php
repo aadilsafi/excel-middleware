@@ -20,7 +20,7 @@ class OrderController extends Controller
         $items = $request->Items;
         // Convert single quotes to double quotes
         $items = str_replace("'", "\"", $items);
-        // $items = preg_replace('/"ProductName":\s*""(.*?)"",/', '"ProductName": "\1",', $items);
+        $items = preg_replace('/"ProductName":\s*""(.*?)"",/', '"ProductName": "\1",', $items);
 
         // Log::info('items 1st : ' . json_encode($items));
 
@@ -50,6 +50,12 @@ class OrderController extends Controller
         Log::info('items 4th.2nd : '.\json_encode($items));
 
         $items = preg_replace('/(?<=[a-zA-Z])"(?=[a-zA-Z])/', "'", $items);
+
+        Log::info('items 4th.3rd : ' . \json_encode($items));
+
+        $items = preg_replace('/(?<=\w)"(?=\w)/', "'", $items);
+
+        Log::info('items 4th.4th : ' . \json_encode($items));
 
         Log::info('items 5th : ' . json_encode($items));
 
