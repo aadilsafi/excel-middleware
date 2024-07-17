@@ -22,15 +22,26 @@ class OrderController extends Controller
         $items = str_replace("'", "\"", $items);
         $items = preg_replace('/"ProductName":\s*""(.*?)"",/', '"ProductName": "\1",', $items);
 
+        Log::info('items 1st : ' . json_encode($items));
+
         // Step 2: Fix improper XML string handling in "ExtraInformation"
         $items = preg_replace('/"ExtraInformation":\s*".*?",/', '', $items);
+
+        Log::info('items 2nd : ' . json_encode($items));
 
         // Step 3: Replace None with null
         $items = str_replace('None', 'null', $items);
 
+        Log::info('items 3rd : ' . json_encode($items));
+
         // Step 4: Replace False with false (for boolean values)
         $items = str_replace('False', 'false', $items);
+
+        Log::info('items 4th : ' . json_encode($items));
+
         $items = preg_replace('/(?<=[a-zA-Z])"(?=[a-zA-Z])/', "'", $items);
+
+        Log::info('items 5th : ' . json_encode($items));
 
         $items = json_decode($items, true);
 
