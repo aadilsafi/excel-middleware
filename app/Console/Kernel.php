@@ -15,7 +15,9 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->command('order-files-process')->hourly()->withoutOverlapping();
         $schedule->command('get-vendor-products')->weekly()->withoutOverlapping();
+        $schedule->command('get-vendor-products',[15080])->weekly()->withoutOverlapping();
         $schedule->command('read-emails')->hourly()->withoutOverlapping();
+        $schedule->command('process-seawide-orders')->everyTwoHours()->withoutOverlapping();
     }
 
     /**

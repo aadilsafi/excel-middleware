@@ -16,9 +16,10 @@ class GetVendorProducts implements ShouldQueue
      * Create a new job instance.
      */
     public $timeout = 0;
-    public function __construct()
+    public $vendor_id;
+    public function __construct($vendor_id = null)
     {
-        //
+        $this->vendor_id = $vendor_id;
     }
 
     /**
@@ -29,7 +30,7 @@ class GetVendorProducts implements ShouldQueue
         $sellerCloudService = new \App\Services\SellerCloudService();
         $pageNumber = 1;
         do {
-            $products = $sellerCloudService->getProducts($pageNumber);
+            $products = $sellerCloudService->getProducts($pageNumber,100,$this->vendor_id);
             foreach ($products as $product) {
                 \App\Models\Product::updateOrCreate(
                     ['ProductSKU' => $product['ProductSKU']],
