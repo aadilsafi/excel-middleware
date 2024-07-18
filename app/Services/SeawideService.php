@@ -159,6 +159,7 @@ class SeawideService
             }
             return Str::contains($result, 'OK');
         } catch (\Exception $e) {
+            Log::info($e->getMessage());
             Log::info('here we are with catch in seawide Service');
             return false;
         }
