@@ -160,7 +160,9 @@ class SeawideService
             return Str::contains($result, 'OK');
         } catch (\Exception $e) {
             Log::info($e->getMessage());
-            Log::info('here we are with catch in seawide Service');
+            $sellerCloudService = new SellerCloudService();
+            $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' '.$e->getMessage(), 'title' => 'Seawide error']);
+
             return false;
         }
     }
