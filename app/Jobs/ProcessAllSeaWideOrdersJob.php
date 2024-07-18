@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ProcessAllSeaWideOrdersJob implements ShouldQueue
 {
@@ -28,6 +29,7 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('seawide processing orders command');
         $all_orders = Order::where('vendor_id', 15080)->get();
         $seawideService = new \App\Services\SeawideService();
         $sellercloudService = new \App\Services\SellerCloudService();
@@ -42,6 +44,8 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
                 $order->delete();
             }
         }
+        Log::info('seawide processing orders command end');
+
     }
 
     public function getShippingDetails($code)
