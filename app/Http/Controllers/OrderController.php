@@ -106,10 +106,10 @@ class OrderController extends Controller
 
             if (Str::contains($items[0]['DefaultVendorName'], 'SeawideB2B')) {
                 Log::info('Vendor is Seawide');
-                $this->seawideOrder($request, $items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
+                $this->seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
             } elseif (Str::contains($items[0]['DefaultVendorName'], 'RSR')) {
                 Log::info('Vendor is RSR');
-                $this->rsrOrder($request, $items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
+                $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
             } else {
                 Log::info('Vendor is not RSR and Seawide');
                 $sellerCloudService->sendEmail(null, [
@@ -132,7 +132,7 @@ class OrderController extends Controller
         return response()->json([], 200);
     }
 
-    public function seawideOrder($request, $items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
+    public function seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
     {
         $total_quantity= 0;
         $sellerCloudService = new \App\Services\SellerCloudService();
@@ -142,13 +142,12 @@ class OrderController extends Controller
             Log::info($item['ProductID']);
             $FullPartNo = Product::where('ProductSKU', $item['ProductID'])->where('VendorId',15080)->first()?->VendorSKU;
             if (!$FullPartNo) {
-                $sellerCloudService->sendEmail(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database Order ID is => ' . $request->id, 'title' => 'Vendor Sku not found']);
+                $sellerCloudService->sendEmail(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database Order ID is => ' . $source_id, 'title' => 'Vendor Sku not found']);
                 return;
             }
             $total_quantity += $item['Qty'];
         }
 
-        $source_id  = $request->id;
         Order::updateOrCreate([
             'order_source_id' => $FullPartNo,
             'vendor_id' => 15080,
@@ -189,7 +188,7 @@ class OrderController extends Controller
         );
     }
 
-    public function rsrOrder($request, $items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
+    public function rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
     {
         $sellerCloudService = new \App\Services\SellerCloudService();
         $date = date('Ymd');
@@ -209,7 +208,7 @@ class OrderController extends Controller
             Log::info($item['ProductID']);
             $vendorSKU = Product::where('ProductSKU', $item['ProductID'])->where('VendorId',15073)->first()?->VendorSKU;
             if (!$vendorSKU) {
-                $sellerCloudService->sendEmail(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database Order ID is => ' . $request->id, 'title' => 'Vendor Sku not found']);
+                $sellerCloudService->sendEmail(null, ['heading' => 'Vendor Sku not Found', 'body' => 'this Vendor was not on our database Order ID is => ' . $source_id, 'title' => 'Vendor Sku not found']);
                 return;
             }
             $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);

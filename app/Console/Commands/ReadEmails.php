@@ -65,6 +65,7 @@ class ReadEmails extends Command
             // You can return the data as JSON, save to database, etc.
 
         } catch (\Exception $e) {
-            Log::error($e->getMessage());}
+            Log::error($e->getMessage());
+        }
     }
 }
