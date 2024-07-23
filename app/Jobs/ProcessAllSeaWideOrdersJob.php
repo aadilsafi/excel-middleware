@@ -39,13 +39,16 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
                 $file_date = Carbon::createFromFormat('Ymd', $data->date);
                 $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
                 $shipping_method = $this->getShippingDetails($data->shipping_method);
-                $sellercloudService->updateShipping($order->order_id, $ship_date, $data->tracking_num, $shipping_method->carrier_name, $shipping_method->shipping_method, 258);
+                $res = $sellercloudService->updateShipping($order->order_id, $ship_date, $data->tracking_num, $shipping_method->carrier_name, $shipping_method->shipping_method, 258);
                 // Delete order here
+                if (!$res) {
+                    Log::error('Failed to update order id: ' . $order->order_id . ' and tracking number: ' . $data->tracking_num . ' at ' . $ship_date);
+                    continue;
+                }
                 $order->delete();
             }
         }
         Log::info('seawide processing orders command end');
-
     }
 
     public function getShippingDetails($code)
@@ -59,14 +62,13 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
                 "carrier_name" => "USPS",
                 "shipping_method" => "USPS Priority Mail",
             ];
-        }
-        else if ($code == 3) {
+        } else if ($code == 3) {
             $shipping = [
                 "carrier_name" => "UPS",
                 "shipping_method" => "UPS Ground",
             ];
         }
 
-        return (Object)$shipping;
+        return (object)$shipping;
     }
 }
