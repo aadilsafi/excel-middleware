@@ -79,18 +79,23 @@ class SellerCloudService implements SellerCloudInterface
     }
     public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name = 'FedEx', $shipping_method = 'FedEx 2Day', $warehouses_id = 255)
     {
-        $response = $this->client->put($this->baseUrl . "Orders/ShippingStatus/SinglePackage", [
-            'headers' => $this->headers,
-            'json' => [
-                'OrderID' => $order_id,
-                'ShipDate' => $ship_date,
-                'TrackingNumber' => $tracking_number,
-                'CarrierName' => $carrier_name,
-                'ShippingMethod' => $shipping_method,
-                'WarehouseID' => $warehouses_id
-            ],
-        ]);
-        return json_decode($response->getBody(), true);
+        try {
+            $response = $this->client->put($this->baseUrl . "Orders/ShippingStatus/SinglePackage", [
+                'headers' => $this->headers,
+                'json' => [
+                    'OrderID' => $order_id,
+                    'ShipDate' => $ship_date,
+                    'TrackingNumber' => $tracking_number,
+                    'CarrierName' => $carrier_name,
+                    'ShippingMethod' => $shipping_method,
+                    'WarehouseID' => $warehouses_id
+                ],
+            ]);
+            return true;
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return false;
+        }
     }
     public function sendEmail(
         $file = null,
