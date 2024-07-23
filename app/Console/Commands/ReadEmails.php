@@ -54,7 +54,7 @@ class ReadEmails extends Command
                         'order_id' => $orderId,
                         'tracking_number' => $trackingNumber,
                     ];
-                    Log::info('processing emails for order id: ' . $orderId . ' and tracking number: ' . $trackingNumber);
+                    Log::info('processing emails for order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
                     $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber);
                 }
 

@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Webklex\IMAP\Facades\Client;
 
 class NewOrdersExcel extends Command
 {
@@ -30,6 +31,10 @@ class NewOrdersExcel extends Command
      */
     public function handle()
     {
+
+        $file = Storage::disk('local')->path('orderImports/export-3.csv');
+        Excel::import(new NewOrdersImport, $file);
+        return;
         // read file from local storage
         try {
             $client = Client::account('default'); // Connect to the default account

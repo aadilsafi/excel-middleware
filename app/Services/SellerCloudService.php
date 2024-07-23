@@ -88,7 +88,6 @@ class SellerCloudService implements SellerCloudInterface
                 'CarrierName' => $carrier_name,
                 'ShippingMethod' => $shipping_method,
                 'WarehouseID' => $warehouses_id
-
             ],
         ]);
         return json_decode($response->getBody(), true);
