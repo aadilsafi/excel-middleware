@@ -98,6 +98,7 @@ class SeawideService
             //         }
             //     }
             // }
+            Log::info('Seawide Shipping Options => ' . \json_encode($responseArray));
             if (!is_array($responseArray)) {
                 throw new \Exception('Expected $responseArray to be an array, got: ' . gettype($responseArray));
             }
