@@ -18,40 +18,13 @@ use SoapClient as SoapClient;
 */
 
 Route::get('test', function () {
-    dd('die');
-    dd(dispatch(new \App\Jobs\ProcessAllSeaWideOrdersJob()));
-    $seawideService = new \App\Services\SeawideService();
-    $FullPartNo = "YAK060015";
-    $Quant = "1";
-    $DropShipFirstName = "JungSun Bong";
-    $DropShipLastName = "";
-    $DropShipCompany = "";
-    $DropShipAddress1 = "1722 OTTS CHAPEL RD GA104076";
-    $DropShipAddress2 = "";
-    $DropShipCity = "NEWARK";
-    $DropShipState = "DE";
-    $DropShipPostalCode = "19702";
-    $DropShipPhone = "3474483190";
-    $PONumber = "6946531";
-    $AdditionalInfo = "";
-
-
-    $data = $seawideService->ShipOrderDropShip(
-        $FullPartNo,
-        $Quant,
-        $DropShipFirstName,
-        $DropShipLastName,
-        $DropShipCompany,
-        $DropShipAddress1,
-        $DropShipAddress2,
-        $DropShipCity,
-        $DropShipState,
-        $DropShipPostalCode,
-        $DropShipPhone,
-        $PONumber,
-        $AdditionalInfo,
-    );
-    dd($data);
+    // $DropShipPostalCode = '32714';
+    // $zipcode = null;
+    // if (strlen($DropShipPostalCode) >= 5) {
+    //     $zipcode =  substr($DropShipPostalCode, 0, 5);
+    // }
+    // $seawideService = new \App\Services\SeawideService();
+    // dd($seawideService->GetShippingOptions('W6851394'));
 });
 
 Route::get('fetch-products', function () {

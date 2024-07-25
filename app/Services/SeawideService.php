@@ -90,29 +90,21 @@ class SeawideService
             $responseArray = json_decode(json_encode($xmlObject), true);
             $responseArray = $responseArray['ShippingOptions'];
 
-            // if (isset($responseArray['Rates'])) {
-            //     foreach ($responseArray['Rates'] as $option) {
-            //         if (isset($option['Rate']) && $option['Rate'] <= $shippingOption['Rate'] || !$shippingOption['Rate']) {
-            //             $shippingOption['Rate'] = $option['Rate'];
-            //             $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
-            //         }
-            //     }
-            // }
-            Log::info('Seawide Shipping Options => ' . \json_encode($responseArray));
-            if (!is_array($responseArray)) {
-                throw new \Exception('Expected $responseArray to be an array, got: ' . gettype($responseArray));
-            }
-
-            if (isset($responseArray['Rates']) && is_array($responseArray['Rates'])) {
-                foreach ($responseArray['Rates'] as $option) {
-                    if (isset($option['Rate']) && (empty($shippingOption['Rate']) || $option['Rate'] <= $shippingOption['Rate'])) {
-                        $shippingOption['Rate'] = $option['Rate'];
-                        $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+            if (isset($responseArray['Rates'])) {
+                $rates = $responseArray['Rates'];
+                if (isset($rates[0]) && is_array($rates[0])) {
+                    // Case 1: Rates is an array of rate objects
+                    foreach ($responseArray['Rates'] as $option) {
+                        if (isset($option['Rate']) && $option['Rate'] <= $shippingOption['Rate'] || !$shippingOption['Rate']) {
+                            $shippingOption['Rate'] = $option['Rate'];
+                            $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                        }
                     }
+                } else {
+                    $shippingOption['Rate'] = $rates['Rate'];
+                    $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
                 }
-            } else {
-                // Additional debug information if 'Rates' key is not found or is not an array
-                throw new \Exception('Expected $responseArray["Rates"] to be an array, got: ' . gettype($responseArray['Rates']));
+
             }
 
             return (object)$shippingOption;
