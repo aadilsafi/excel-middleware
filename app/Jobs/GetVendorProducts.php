@@ -31,6 +31,9 @@ class GetVendorProducts implements ShouldQueue
         $pageNumber = 1;
         do {
             $products = $sellerCloudService->getProducts($pageNumber,100,$this->vendor_id);
+            if(!$products || count($products) <= 0){
+                break;
+            }
             foreach ($products as $product) {
                 \App\Models\Product::updateOrCreate(
                     ['ProductSKU' => $product['ProductSKU']],

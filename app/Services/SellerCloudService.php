@@ -63,10 +63,9 @@ class SellerCloudService implements SellerCloudInterface
 
             return json_decode($response->getBody(), true)['Items'];
         } catch (Exception $e) {
-            if ($e->getResponse()->getStatusCode() == 401) {
-                Cache::forget('seller_cloud_token');
-                $this->initializeToken();
-            }
+            Cache::forget('seller_cloud_token');
+            $this->initializeToken();
+            return [];
         }
     }
     public function getOrder()
