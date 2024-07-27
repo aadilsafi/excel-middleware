@@ -36,7 +36,7 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
         foreach ($all_orders as $order) {
             $data = $seawideService->GetOrderHistory($order->order_id);
             if ($data->tracking_num) {
-                $file_date = Carbon::createFromFormat('Ymd', $data->date)->addDay();
+                $file_date = now();
                 $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
                 $shipping_method = $this->getShippingDetails($data->shipping_method);
                 $res = $sellercloudService->updateShipping($order->order_id, $ship_date, $data->tracking_num, $shipping_method->carrier_name, $shipping_method->shipping_method, 258);
