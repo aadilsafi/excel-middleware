@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('get-vendor-products',[15080])->weekly()->withoutOverlapping();
         $schedule->command('read-emails')->hourly()->withoutOverlapping();
         $schedule->command('process-seawide-orders')->everyTwoHours()->withoutOverlapping();
+        $schedule->command('app:new-orders-excel')->everyThirtyMinutes()->withoutOverlapping();
     }
 
     /**
