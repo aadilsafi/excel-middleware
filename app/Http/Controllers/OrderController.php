@@ -170,7 +170,6 @@ class OrderController extends Controller
         $DropShipPostalCode = $PostalCode;
         $DropShipPhone = $PhoneNumber;
         $PONumber = $source_id;
-        $AdditionalInfo = '';
         $data = $seawideService->ShipOrderDropShip(
             $FullPartNo,
             $Quant,
@@ -184,7 +183,6 @@ class OrderController extends Controller
             $DropShipPostalCode,
             $DropShipPhone,
             $PONumber,
-            $AdditionalInfo,
         );
     }
 

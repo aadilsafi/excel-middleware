@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use Exception;
 use stdClass;
 use SoapClient;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use PhpParser\Node\Expr\Throw_;
 
 class SeawideService
 {
@@ -104,7 +106,6 @@ class SeawideService
                     $shippingOption['Rate'] = $rates['Rate'];
                     $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
                 }
-
             }
 
             return (object)$shippingOption;
@@ -136,7 +137,7 @@ class SeawideService
             if (strlen($DropShipPostalCode) >= 5) {
                 $zipcode =  substr($DropShipPostalCode, 0, 5);
             }
-            $shippingOptions = $this->GetShippingOptions($FullPartNo,$zipcode);
+            $shippingOptions = $this->GetShippingOptions($FullPartNo, $zipcode);
 
             $this->params->FullPartNo = $FullPartNo;
             $this->params->Quant = $Quant;
@@ -160,17 +161,100 @@ class SeawideService
             // Extract the XML from the response
 
             $result = $response->ShipOrderDropShipResult;
-            if(!Str::contains($result, 'OK')){
+            if (!Str::contains($result, 'OK')) {
                 $sellerCloudService = new SellerCloudService();
-                $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' '.json_encode($result), 'title' => 'Seawide error']);
-
+                $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . json_encode($result), 'title' => 'Seawide error']);
+                return false;
             }
             return Str::contains($result, 'OK');
         } catch (\Exception $e) {
             Log::info($e->getMessage());
             $sellerCloudService = new SellerCloudService();
-            $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' '.$e->getMessage(), 'title' => 'Seawide error']);
+            $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . $e->getMessage(), 'title' => 'Seawide error']);
 
+            return false;
+        }
+    }
+
+    public function ShipOrderDropShipMultiparts(
+        $FullPartNo,
+        $Quant,
+        $DropShipFirstName,
+        $DropShipLastName,
+        $DropShipCompany,
+        $DropShipAddress1,
+        $DropShipAddress2,
+        $DropShipCity,
+        $DropShipState,
+        $DropShipPostalCode,
+        $DropShipPhone,
+        $PONumber,
+        $partNumberQuantity
+    ) {
+        Log::info('multi part start');
+        Log::info('Seawide Processing order => ' . $FullPartNo);
+        $DropShipCountry = "US";
+        $DropShipEmail = "info@thesuppliesnmore.com";
+        try {
+            $zipcode = null;
+            if (strlen($DropShipPostalCode) >= 5) {
+                $zipcode =  substr($DropShipPostalCode, 0, 5);
+            }
+            $shippingOptions = $this->GetShippingOptions($FullPartNo, $zipcode);
+
+            $this->params->FullPartNo = $FullPartNo;
+            $this->params->Quant = $Quant;
+            $this->params->DropShipFirstName = $DropShipFirstName;
+            $this->params->DropShipLastName = $DropShipLastName;
+            $this->params->DropShipCompany = $DropShipCompany;
+            $this->params->DropShipAddress1 = $DropShipAddress1;
+            $this->params->DropShipAddress2 = $DropShipAddress2;
+            $this->params->DropShipCity = $DropShipCity;
+            $this->params->DropShipState = $DropShipState;
+            $this->params->DropShipPostalCode = $DropShipPostalCode;
+            $this->params->DropShipPhone = $DropShipPhone;
+            $this->params->DropShipEmail = $DropShipEmail;
+            $this->params->DropShipCountry = $DropShipCountry;
+            $this->params->PONumber = $PONumber;
+            $this->params->ServiceLevel =  $shippingOptions->ServiceLevel;
+            $this->params->PartNumberQuantity = $partNumberQuantity;
+
+            $this->params->OrderProcessMethod = 1; // 1 = complete order 0 = No parts are ordered; this assures the user that the order can be fulfilled by Keystone.
+
+            $response = $this->client->__soapCall('ShipOrderDropShipMultipleParts', [$this->params]);
+            $anyXml = $response->ShipOrderDropShipMultiplePartsResult->any;
+
+            $xml = simplexml_load_string($anyXml);
+
+            // Register namespaces to use XPath
+            $xml->registerXPathNamespace('diffgr', 'urn:schemas-microsoft-com:xml-diffgram-v1');
+            $xml->registerXPathNamespace('msdata', 'urn:schemas-microsoft-com:xml-msdata');
+
+            // Extract the status
+            $statusNodes = $xml->xpath('//Status');
+            $result = null;
+
+            foreach ($statusNodes as $node) {
+                if (isset($node->Status)) {
+                    $result = (string) $node->Status;
+                    break; // Assuming we need only the first occurrence
+                }
+            }
+
+            // Extract the XML from the response
+            if (!Str::contains($result, 'OK')) {
+                $sellerCloudService = new SellerCloudService();
+                $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . json_encode($result), 'title' => 'Seawide error']);
+                return false;
+            }
+            Log::info('multi part end');
+
+            return Str::contains($result, 'OK');
+        } catch (\Exception $e) {
+            Log::info($e->getMessage());
+            $sellerCloudService = new SellerCloudService();
+            $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . $e->getMessage(), 'title' => 'Seawide error']);
+            Log::info('multi part end');
             return false;
         }
     }

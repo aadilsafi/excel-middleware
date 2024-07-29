@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class NewOrdersImport implements ToCollection
 {
@@ -21,7 +22,10 @@ class NewOrdersImport implements ToCollection
 
         $orders = collect();
         Log::info('Processing new orders from excel');
-        foreach ($collection as $row) {
+        foreach ($collection as $key => $row) {
+            if ($key == 0) {
+                continue;
+            }
             $orderId = $row[0]; // Assuming the first column is Order ID
             if (!$orders->has($orderId)) {
                 $orders->put($orderId, collect([
@@ -40,14 +44,15 @@ class NewOrdersImport implements ToCollection
                     'items' => collect(),
                 ]));
             }
-
+            $is_kit = $row[14] ?? false;
             $orders->get($orderId)->get('items')->push([
-                'Qty' => $row[4],
-                'vendor_sku' => $row[6],
+                'Qty' => $is_kit ? $row[15] :$row[4],
+                'vendor_sku' => $is_kit ? $row[16] : $row[6],
             ]);
         }
+
         foreach ($orders as $order) {
-            Log::info('Order ID: ' . $orderId);
+            Log::info('Order ID: ' . $order['order_id']);
 
             $source_id  = $order['order_id'];
 
@@ -90,7 +95,15 @@ class NewOrdersImport implements ToCollection
             if (Str::contains($order['vendor_name'], 'SeawideB2B')) {
                 Log::info('Vendor is Seawide');
                 $vendor_sku = $order['items'][0]['vendor_sku'];
-                $this->seawideOrder($source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber,$vendor_sku, $total_quantity);
+                $res =  $this->seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber, $vendor_sku, $total_quantity);
+                if (!$res) {
+                    Log::info('Vendor is  Seawide but items are not present');
+                    $sellerCloudService->sendEmail(null, [
+                        'body' => 'This Order is from Seawide but issue with items Vendor Order ID is => ' . $source_id,
+                        'title' => 'Seawide Order but issue with items',
+                        'heading' => 'Seawide Order but issue with items',
+                    ]);
+                }
             } elseif (Str::contains($order['vendor_name'], 'RSR')) {
                 Log::info('Vendor is RSR');
                 $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
@@ -103,10 +116,8 @@ class NewOrdersImport implements ToCollection
                 ]);
             }
         }
-
-
     }
-    public function seawideOrder($source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber, $FullPartNo, $total_quantity)
+    public function seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber, $FullPartNo, $total_quantity)
     {
         $seawideService = new \App\Services\SeawideService();
 
@@ -132,8 +143,17 @@ class NewOrdersImport implements ToCollection
         $DropShipPostalCode = $PostalCode;
         $DropShipPhone = $PhoneNumber;
         $PONumber = $source_id;
-        $AdditionalInfo = '';
-        $data = $seawideService->ShipOrderDropShip(
+        $partNumberQuantity = '';
+        foreach ($items as $item) {
+            if (!empty($partNumberQuantity)) {
+                $partNumberQuantity .= '|';
+            }
+            $partNumberQuantity .= $item['vendor_sku'] . ',' . $item['Qty'];
+        }
+        if (!$partNumberQuantity) {
+            return false;
+        }
+        $data = $seawideService->ShipOrderDropShipMultiparts(
             $FullPartNo,
             $Quant,
             $DropShipFirstName,
@@ -146,8 +166,9 @@ class NewOrdersImport implements ToCollection
             $DropShipPostalCode,
             $DropShipPhone,
             $PONumber,
-            $AdditionalInfo,
+            $partNumberQuantity
         );
+        return $data;
     }
     public function rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
     {
