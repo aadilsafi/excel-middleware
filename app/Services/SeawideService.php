@@ -70,7 +70,7 @@ class SeawideService
         }
     }
 
-    public function GetShippingOptions($FullPartNo, $zipcode = null)
+    public function GetShippingOptions($FullPartNo, $zipcode = null,$quantity = 1)
     {
         $shippingOption = [
             'ServiceLevel' => null,
@@ -80,6 +80,7 @@ class SeawideService
 
             $this->params->FullPartNo = $FullPartNo;
             $this->params->ToZip = $zipcode;
+            $this->params->Quantity = $quantity;
             $response = $this->client->__soapCall('GetShippingOptions', [$this->params]);
             // Extract the XML from the response
 
@@ -92,6 +93,7 @@ class SeawideService
             $responseArray = json_decode(json_encode($xmlObject), true);
             $responseArray = $responseArray['ShippingOptions'];
 
+            Log::info('shipping options from get => '.\json_encode($responseArray));
             if (isset($responseArray['Rates'])) {
                 $rates = $responseArray['Rates'];
                 if (isset($rates[0]) && is_array($rates[0])) {
@@ -137,7 +139,7 @@ class SeawideService
             if (strlen($DropShipPostalCode) >= 5) {
                 $zipcode =  substr($DropShipPostalCode, 0, 5);
             }
-            $shippingOptions = $this->GetShippingOptions($FullPartNo, $zipcode);
+            $shippingOptions = $this->GetShippingOptions($FullPartNo, $zipcode,$Quant);
 
             $this->params->FullPartNo = $FullPartNo;
             $this->params->Quant = $Quant;
@@ -189,7 +191,8 @@ class SeawideService
         $DropShipPostalCode,
         $DropShipPhone,
         $PONumber,
-        $partNumberQuantity
+        $partNumberQuantity,
+        $partNumberQuantityShipping
     ) {
         Log::info('multi part start');
         Log::info('Seawide Processing order => ' . $FullPartNo);
@@ -200,8 +203,8 @@ class SeawideService
             if (strlen($DropShipPostalCode) >= 5) {
                 $zipcode =  substr($DropShipPostalCode, 0, 5);
             }
-            $shippingOptions = $this->GetShippingOptions($FullPartNo, $zipcode);
-
+            $shippingOptions = $this->GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping);
+            Log::info(\json_encode('shipping options multipart drop ship => '.$shippingOptions->ServiceLevel));
             $this->params->FullPartNo = $FullPartNo;
             $this->params->Quant = $Quant;
             $this->params->DropShipFirstName = $DropShipFirstName;
@@ -221,6 +224,8 @@ class SeawideService
 
             $this->params->OrderProcessMethod = 1; // 1 = complete order 0 = No parts are ordered; this assures the user that the order can be fulfilled by Keystone.
 
+
+            Log::info('multipart params => '.\json_encode($this->params));
             $response = $this->client->__soapCall('ShipOrderDropShipMultipleParts', [$this->params]);
             $anyXml = $response->ShipOrderDropShipMultiplePartsResult->any;
 
@@ -243,6 +248,7 @@ class SeawideService
 
             // Extract the XML from the response
             if (!Str::contains($result, 'OK')) {
+                Log::info($statusNodes);
                 $sellerCloudService = new SellerCloudService();
                 $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . json_encode($result), 'title' => 'Seawide error']);
                 return false;
@@ -256,6 +262,52 @@ class SeawideService
             $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . $e->getMessage(), 'title' => 'Seawide error']);
             Log::info('multi part end');
             return false;
+        }
+    }
+
+    public function GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping)
+    {
+        $shippingOption = [
+            'ServiceLevel' => null,
+            'Rate' => null,
+        ];
+        try {
+
+            // $this->params->FullPartNo = $FullPartNo;
+            $this->params->ToZip = $zipcode;
+            $this->params->PartNumbersQty = $partNumberQuantityShipping;
+            $response = $this->client->__soapCall('GetShippingOptionsMultipleParts', [$this->params]);
+            // Extract the XML from the response
+
+            $xml = $response->GetShippingOptionsMultiplePartsResult->any;
+
+            // Load the XML string into a SimpleXMLElement object
+            $xmlObject = simplexml_load_string($xml);
+
+            // Decode the JSON to an associative array
+            $responseArray = json_decode(json_encode($xmlObject), true);
+            $responseArray = $responseArray['ShippingOptions'];
+
+            Log::info('shipping options from get => '.\json_encode($responseArray));
+            if (isset($responseArray['Rates'])) {
+                $rates = $responseArray['Rates'];
+                if (isset($rates[0]) && is_array($rates[0])) {
+                    // Case 1: Rates is an array of rate objects
+                    foreach ($responseArray['Rates'] as $option) {
+                        if (isset($option['Rate']) && $option['Rate'] <= $shippingOption['Rate'] || !$shippingOption['Rate']) {
+                            $shippingOption['Rate'] = $option['Rate'];
+                            $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                        }
+                    }
+                } else {
+                    $shippingOption['Rate'] = $rates['Rate'];
+                    $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
+                }
+            }
+
+            return (object)$shippingOption;
+        } catch (\Exception $e) {
+            return (object)$shippingOption;
         }
     }
 }

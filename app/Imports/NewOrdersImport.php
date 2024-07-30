@@ -144,13 +144,18 @@ class NewOrdersImport implements ToCollection
         $DropShipPhone = $PhoneNumber;
         $PONumber = $source_id;
         $partNumberQuantity = '';
+        $partNumberQuantityShipping = '';
         foreach ($items as $item) {
             if (!empty($partNumberQuantity)) {
                 $partNumberQuantity .= '|';
+                $partNumberQuantityShipping .= '|';
             }
             $partNumberQuantity .= $item['vendor_sku'] . ',' . $item['Qty'];
+            $partNumberQuantityShipping .= "K,". $item['vendor_sku'] . ',' . $item['Qty'];
         }
+
         if (!$partNumberQuantity) {
+            Log::info('partNumber Not Found '.$partNumberQuantity);
             return false;
         }
         $data = $seawideService->ShipOrderDropShipMultiparts(
@@ -166,7 +171,8 @@ class NewOrdersImport implements ToCollection
             $DropShipPostalCode,
             $DropShipPhone,
             $PONumber,
-            $partNumberQuantity
+            $partNumberQuantity,
+            $partNumberQuantityShipping
         );
         return $data;
     }

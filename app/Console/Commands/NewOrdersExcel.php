@@ -31,6 +31,10 @@ class NewOrdersExcel extends Command
      */
     public function handle()
     {
+
+        // $file = Storage::disk('local')->path('orderImports/export-5.csv');
+        // Excel::import(new NewOrdersImport, $file);
+        // return;
         // read file from local storage
         try {
             $client = Client::account('default'); // Connect to the default account
