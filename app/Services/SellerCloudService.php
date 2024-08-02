@@ -93,6 +93,11 @@ class SellerCloudService implements SellerCloudInterface
             return true;
         } catch (Exception $e) {
             Log::error($e->getMessage());
+            $this->sendEmail(null, [
+                'body' => 'Failed to update order id: ' . $order_id . ' and tracking number: ' . $tracking_number . ' at ' . $ship_date,
+                'title' => "Failed Updating Shipping Details Order Id = " . $order_id,
+                'heading' => "Failed Updating Shipping Details Order Id = " . $order_id,
+            ]);
             return false;
         }
     }

@@ -178,6 +178,8 @@ class NewOrdersImport implements ToCollection
     }
     public function rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
     {
+        $sellerCloudService = new \App\Services\SellerCloudService();
+
         $date = date('Ymd');
         // quantity with the leading zeros if needed
         $quantity = str_pad(1, 5, '0', STR_PAD_LEFT);
@@ -212,6 +214,11 @@ class NewOrdersImport implements ToCollection
 
         if (!Storage::disk('local')->exists($filePath)) {
             Log::info('file not found');
+            $sellerCloudService->sendEmail(null, [
+                'body' => 'RSR local file not found for upload to rsr ftp server for order id : ' . $source_id,
+                'title' => "RSR local file not found for upload to rsr ftp Order Id = " . $source_id,
+                'heading' => "RSR local file not found for upload to rsr ftp Order Id = " . $source_id,
+            ]);
             return response()->json(['error' => 'Local file does not exist.'], 404);
         }
 
@@ -228,6 +235,11 @@ class NewOrdersImport implements ToCollection
             Log::info('file uploaded to FTP Order');
         } else {
             Log::info('file not uploaded to FTP Order');
+            $sellerCloudService->sendEmail(null, [
+                'body' => 'RSR failed to upload the compiled FTP file to the rsr ftp server for order id : ' . $source_id,
+                'title' => "RSR File not Uploaded to FTP for Order Id = " . $source_id,
+                'heading' => "RSR File not Uploaded to FTP for Order Id = " . $source_id,
+            ]);
         }
     }
 }
