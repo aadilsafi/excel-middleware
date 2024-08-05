@@ -58,6 +58,7 @@ class ReadEmails extends Command
                     $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber);
                     if(!$res){
                         Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber. ' at ' . $ship_date);
+                        $message->setFlag(['Seen']);
                         continue;
                     }
                 }
