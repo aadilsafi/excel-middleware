@@ -34,7 +34,9 @@ class ProcessAllSeaWideOrdersJob implements ShouldQueue
         $seawideService = new \App\Services\SeawideService();
         $sellercloudService = new \App\Services\SellerCloudService();
         foreach ($all_orders as $order) {
+            Log::info('Processing order id: ' . $order->order_id);
             $data = $seawideService->GetOrderHistory($order->order_id);
+            Log::info('Order data: ' . json_encode($data));
             if ($data->tracking_num) {
                 // $file_date = Carbon::createFromFormat('Ymd', $data->date)->addDay();
                 $file_date = Carbon::now();
