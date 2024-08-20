@@ -104,7 +104,7 @@ class NewOrdersImport implements ToCollection
                         'heading' => 'Seawide Order but issue with items',
                     ]);
                 }
-            } elseif (Str::contains($order['vendor_name'], 'RSR')) {
+            } elseif ($order['vendor_name'] == 'RSR') {
                 Log::info('Vendor is RSR');
                 $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
             } else {

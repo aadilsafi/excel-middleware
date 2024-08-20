@@ -107,7 +107,7 @@ class OrderController extends Controller
             if (Str::contains($items[0]['DefaultVendorName'], 'SeawideB2B')) {
                 Log::info('Vendor is Seawide');
                 $this->seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
-            } elseif (Str::contains($items[0]['DefaultVendorName'], 'RSR')) {
+            } elseif ($items[0]['DefaultVendorName'] == 'RSR') {
                 Log::info('Vendor is RSR');
                 $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
             } else {

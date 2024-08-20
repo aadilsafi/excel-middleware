@@ -46,7 +46,7 @@ Route::post('test', function (Request $request) {
     $items = preg_replace('/(?<=[a-zA-Z])"(?=[a-zA-Z])/', "'", $items);
 
     $items = json_decode($items, true);
-    if (!isset($items[0]) || (isset($items[0])  && !Str::contains($items[0]['DefaultVendorName'], 'RSR'))) {
+    if (!isset($items[0]) || (isset($items[0])  && !$items[0]['DefaultVendorName'] == 'RSR')) {
         Log::info('Venor is not RSR');
         $sellerCloudService->sendEmail(null,[
             'body' => 'This Order is not from RSR Vendor Order ID is => '.$request->id,
