@@ -46,7 +46,7 @@ class NewOrdersImport implements ToCollection
             }
             $is_kit = $row[14] ?? false;
             $orders->get($orderId)->get('items')->push([
-                'Qty' => $is_kit ? $row[15] :$row[4],
+                'Qty' => $is_kit ? $row[15] : $row[4],
                 'vendor_sku' => $is_kit ? $row[16] : $row[6],
             ]);
         }
@@ -106,7 +106,10 @@ class NewOrdersImport implements ToCollection
                 }
             } elseif ($order['vendor_name'] == 'RSR') {
                 Log::info('Vendor is RSR');
-                $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
+                $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber,'46530');
+            } elseif ($order['vendor_name'] == 'RSR Dropship  67883') {
+                Log::info('Vendor is RSR Dropship  67883');
+                $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber,'67883');
             } else {
                 Log::info('Vendor is not RSR and Seawide');
                 $sellerCloudService->sendEmail(null, [
@@ -151,11 +154,11 @@ class NewOrdersImport implements ToCollection
                 $partNumberQuantityShipping .= '|';
             }
             $partNumberQuantity .= $item['vendor_sku'] . ',' . $item['Qty'];
-            $partNumberQuantityShipping .= "K,". $item['vendor_sku'] . ',' . $item['Qty'];
+            $partNumberQuantityShipping .= "K," . $item['vendor_sku'] . ',' . $item['Qty'];
         }
 
         if (!$partNumberQuantity) {
-            Log::info('partNumber Not Found '.$partNumberQuantity);
+            Log::info('partNumber Not Found ' . $partNumberQuantity);
             return false;
         }
         $data = $seawideService->ShipOrderDropShipMultiparts(
@@ -176,7 +179,7 @@ class NewOrdersImport implements ToCollection
         );
         return $data;
     }
-    public function rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber)
+    public function rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber,$store_id = '46530')
     {
         $sellerCloudService = new \App\Services\SellerCloudService();
 
@@ -191,8 +194,11 @@ class NewOrdersImport implements ToCollection
         DB::table('order_sequences')->update(['current_sequence' => $newSequence]);
 
         $newSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
-
-        $content = "FILEHEADER;00;46530;$date;$newSequence\n$source_id;10;$FirstName;$LastName;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;Info@thesuppliesnmore.com;;\n";
+        if($store_id == '67883'){
+            $content = "FILEHEADER;00;$store_id;$date;$newSequence\n$source_id;10;$FirstName;$LastName;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;ahystradings@gmail.com;;\n";
+        }else{
+            $content = "FILEHEADER;00;$store_id;$date;$newSequence\n$source_id;10;$FirstName;$LastName;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;Info@thesuppliesnmore.com;;\n";
+        }
         foreach ($items as $item) {
             $vendorSKU = $item['vendor_sku'];
             Log::info($vendorSKU);
@@ -201,23 +207,22 @@ class NewOrdersImport implements ToCollection
             $content .= "$source_id;20;$vendorSKU;$quantity;FedEx;Grnd\n";
             $total_quantity += $item['Qty'];
         }
-        Log::info($content);
         // return;
         $total_quantity = str_pad($total_quantity, 5, '0', STR_PAD_LEFT);
 
         $content .= "$source_id;90;$total_quantity\nFILETRAILER;99;00001";
 
         // Specify the file path and name
-        $filePath = 'public/EORD-46530-' . $date . '-' . $newSequence . '.txt';
+        $filePath = 'public/EORD-'.$store_id.'-' . $date . '-' . $newSequence . '.txt';
         // Store the content to a file
         Storage::put($filePath, $content);
 
         if (!Storage::disk('local')->exists($filePath)) {
             Log::info('file not found');
             $sellerCloudService->sendEmail(null, [
-                'body' => 'RSR local file not found for upload to rsr ftp server for order id : ' . $source_id,
-                'title' => "RSR local file not found for upload to rsr ftp Order Id = " . $source_id,
-                'heading' => "RSR local file not found for upload to rsr ftp Order Id = " . $source_id,
+                'body' => "RSR ".$store_id == 67883 ? '(67883)' : ''." local file not found for upload to rsr ftp server for order id : " . $source_id,
+                'title' => "RSR ".$store_id == 67883 ? '(67883)' : ''." local file not found for upload to rsr ftp Order Id = " . $source_id,
+                'heading' => "RSR ".$store_id == 67883 ? '(67883)' : ''." local file not found for upload to rsr ftp Order Id = " . $source_id,
             ]);
             return response()->json(['error' => 'Local file does not exist.'], 404);
         }
@@ -226,19 +231,23 @@ class NewOrdersImport implements ToCollection
         $fileContent = Storage::disk('local')->get($filePath);
 
         // Define the FTP path
-        $ftpPath = 'eo/incoming/EORD-46530-' . $date . '-' . $newSequence . '.txt';
+        $ftpPath = 'eo/incoming/EORD-'.$store_id.'-' . $date . '-' . $newSequence . '.txt';
 
         // Upload the file to FTP
         // check if the file is uploaded
-        $ftp_file = Storage::disk('rsr')->put($ftpPath, $fileContent);
+        if($store_id == '67883'){
+            $ftp_file = Storage::disk('secondary_rsr')->put($ftpPath, $fileContent);
+        }else{
+            $ftp_file = Storage::disk('rsr')->put($ftpPath, $fileContent);
+        }
         if ($ftp_file) {
             Log::info('file uploaded to FTP Order');
         } else {
             Log::info('file not uploaded to FTP Order');
             $sellerCloudService->sendEmail(null, [
-                'body' => 'RSR failed to upload the compiled FTP file to the rsr ftp server for order id : ' . $source_id,
-                'title' => "RSR File not Uploaded to FTP for Order Id = " . $source_id,
-                'heading' => "RSR File not Uploaded to FTP for Order Id = " . $source_id,
+                'body' => "RSR ".$store_id == 67883 ? '(67883)' : ''." failed to upload the compiled FTP file to the rsr ftp server for order id : " . $source_id,
+                'title' => "RSR ".$store_id == 67883 ? '(67883)' : ''." File not Uploaded to FTP for Order Id = " . $source_id,
+                'heading' => "RSR ".$store_id == 67883 ? '(67883)' : ''." File not Uploaded to FTP for Order Id = " . $source_id,
             ]);
         }
     }

@@ -32,7 +32,7 @@ class NewOrdersExcel extends Command
     public function handle()
     {
 
-        // $file = Storage::disk('local')->path('orderImports/export-5.csv');
+        // $file = Storage::disk('local')->path('orderImports/export-2.csv');
         // Excel::import(new NewOrdersImport, $file);
         // return;
         // read file from local storage

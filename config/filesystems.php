@@ -68,6 +68,19 @@ return [
             'ssl'        => true,
             'timeout' => 800,
         ],
+        'secondary_rsr' => [
+            'driver' => 'ftp',
+            'host' => env('SECONDARY_RSR_HOST'),
+            'username' => env('SECONDARY_RSR_USERNAME'),
+            'password' => env('SECONDARY_RSR_PASSWORD'),
+
+            // Optional RSR settings...
+            'port' => (int) env('SECONDARY_RSR_PORT', 2222),
+            'root' => env('SECONDARY_RSR_ROOT', '/'),
+            'passive'    => true,
+            'ssl'        => true,
+            'timeout' => 800,
+        ],
 
     ],
 
