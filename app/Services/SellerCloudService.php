@@ -141,4 +141,28 @@ class SellerCloudService implements SellerCloudInterface
 
         return response()->json(['status' => 'success']);
     }
+    // public function ImportProducts($file_content)
+    // {
+    //     try {
+    //         $response = $this->client->post($this->baseUrl . "Catalog/Imports/Custom", [
+    //             'headers' => $this->headers,
+    //             'json' => [
+    //                 "ProfileName" =>  "RSR Catalog test",
+    //                 "Metadata" =>  [
+    //                     "CreateProductIfDoesntExist" =>  true,
+    //                     "CompanyIdForNewProduct" =>  0,
+    //                     "UpdateFromCompanyId" =>  0,
+    //                     "DoNotUpdateProducts" =>  true
+    //                 ],
+    //                 "FileContents" =>  $file_content,
+    //                 "FileExtension" =>  "csv",
+    //                 "Format" =>  1
+    //             ],
+    //         ]);
+    //         return true;
+    //     } catch (Exception $e) {
+    //         dd($e);
+    //         return false;
+    //     }
+    // }
 }
