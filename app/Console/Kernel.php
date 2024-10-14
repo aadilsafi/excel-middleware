@@ -13,14 +13,14 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('order-files-process')->hourly()->withoutOverlapping()->at('00:01');
-        $schedule->command('order-files-process-secondary')->hourly()->withoutOverlapping()->at('00:15');
-        $schedule->command('get-vendor-products')->weekly()->withoutOverlapping();
-        $schedule->command('get-vendor-products', [15080])->weekly()->withoutOverlapping();
-        $schedule->command('get-vendor-products', [15391])->weekly()->withoutOverlapping();
-        $schedule->command('read-emails')->hourly()->withoutOverlapping()->at('00:55');
-        $schedule->command('process-seawide-orders')->everyTwoHours()->withoutOverlapping()->at('00:30');
-        $schedule->command('app:new-orders-excel')->everyThirtyMinutes()->withoutOverlapping()->at('00:45');
+        $schedule->command('order-files-process')->hourlyAt(01)->withoutOverlapping();
+        $schedule->command('order-files-process-secondary')->hourlyAt(15)->withoutOverlapping();
+        $schedule->command('get-vendor-products')->weeklyOn(1,'8:00')->withoutOverlapping();
+        $schedule->command('get-vendor-products', [15080])->weeklyOn(1,'9:00')->withoutOverlapping();
+        $schedule->command('get-vendor-products', [15391])->weeklyOn(1,'10:00')->withoutOverlapping();
+        $schedule->command('read-emails')->hourlyAt(30)->withoutOverlapping();
+        $schedule->command('process-seawide-orders')->everyTwoHours(50)->withoutOverlapping();
+        $schedule->command('app:new-orders-excel')->everyThirtyMinutes()->withoutOverlapping();
     }
 
     /**
