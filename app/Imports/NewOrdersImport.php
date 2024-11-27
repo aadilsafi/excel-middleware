@@ -46,14 +46,14 @@ class NewOrdersImport implements ToCollection
             }
             $shipping_method = 'Grnd';
             try{
-                if(isset($row[16]) && $row[16] != '' ){
-                    if($row[16] == 'Expedited'){
+                if(isset($row[17]) && $row[17] != '' ){
+                    if($row[17] == 'Expedited'){
                         $shipping_method = '3Day';
                     }
-                    if($row[16] == 'SecondDay'){
+                    if($row[17] == 'SecondDay'){
                         $shipping_method = '2Day';
                     }
-                    if($row[16] == 'NextDay'){
+                    if($row[17] == 'NextDay'){
                         $shipping_method = '1Day';
                     }
                 }
