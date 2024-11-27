@@ -44,10 +44,29 @@ class NewOrdersImport implements ToCollection
                     'items' => collect(),
                 ]));
             }
+            $shipping_method = 'Grnd';
+            try{
+                if(isset($row[16]) && $row[16] != '' ){
+                    if($row[16] == 'Expedited'){
+                        $shipping_method = '3Day';
+                    }
+                    if($row[16] == 'SecondDay'){
+                        $shipping_method = '2Day';
+                    }
+                    if($row[16] == 'NextDay'){
+                        $shipping_method = '1Day';
+                    }
+                }
+            }
+            catch(\Exception $e){
+                Log::info('Error in getting shipping method');
+                Log::info($e->getMessage());
+            }
             $is_kit = $row[14] ?? false;
             $orders->get($orderId)->get('items')->push([
                 'Qty' => $is_kit ? $row[15] : $row[4],
                 'vendor_sku' => $is_kit ? $row[16] : $row[6],
+                'shipping_method' => $shipping_method,
             ]);
         }
 
@@ -202,9 +221,9 @@ class NewOrdersImport implements ToCollection
         foreach ($items as $item) {
             $vendorSKU = $item['vendor_sku'];
             Log::info($vendorSKU);
-
+            $shipping_method = $item['shipping_method'] ?? 'Grnd';
             $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);
-            $content .= "$source_id;20;$vendorSKU;$quantity;FedEx;Grnd\n";
+            $content .= "$source_id;20;$vendorSKU;$quantity;FedEx;$shipping_method\n";
             $total_quantity += $item['Qty'];
         }
         // return;

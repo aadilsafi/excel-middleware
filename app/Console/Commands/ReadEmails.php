@@ -44,10 +44,13 @@ class ReadEmails extends Command
                 // Use regex to find the purchase order number and tracking number
                 preg_match('/Purchase order number\s*:\s*(\d+)/', $body, $purchaseOrderMatches);
                 preg_match('/Tracking number\s*:\s*(\d+)/', $body, $trackingNumberMatches);
+                preg_match('/Service type\s*:\s*([^\r\n]+)/', $body, $serviceTypeMatches);
+
                 $ship_date = Carbon::now()->format('Y-m-d\TH:i:s.v\Z');
 
                 $orderId = $purchaseOrderMatches[1] ?? null;
                 $trackingNumber = $trackingNumberMatches[1] ?? null;
+                $serviceType = $serviceTypeMatches[1] ?? null;
 
                 if ($orderId && $trackingNumber) {
                     $emailData[] = [
@@ -55,7 +58,7 @@ class ReadEmails extends Command
                         'tracking_number' => $trackingNumber,
                     ];
                     Log::info('processing emails for order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
-                    $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber);
+                    $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber,'FedEx', $serviceType);
                     if(!$res){
                         Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber. ' at ' . $ship_date);
                         $message->setFlag(['Seen']);
