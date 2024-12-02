@@ -54,7 +54,7 @@ class NewOrdersImport implements ToCollection
                         $shipping_method = '2Day';
                     }
                     if($row[17] == 'NextDay'){
-                        $shipping_method = '1Day';
+                        $shipping_method = 'NDAS';
                     }
                 }
             }
