@@ -81,10 +81,11 @@ class SeawideService
             $this->params->FullPartNo = $FullPartNo;
             $this->params->ToZip = $zipcode;
             $this->params->Quantity = $quantity;
-            $response = $this->client->__soapCall('GetShippingOptions', [$this->params]);
+
+            $response = $this->client->__soapCall('GetShippingOptionsWithQuantity', [$this->params]);
             // Extract the XML from the response
 
-            $xml = $response->GetShippingOptionsResult->any;
+            $xml = $response->GetShippingOptionsWithQuantityResult->any;
 
             // Load the XML string into a SimpleXMLElement object
             $xmlObject = simplexml_load_string($xml);
@@ -99,6 +100,11 @@ class SeawideService
                 if (isset($rates[0]) && is_array($rates[0])) {
                     // Case 1: Rates is an array of rate objects
                     foreach ($responseArray['Rates'] as $option) {
+                        if(isset($option['Rate']) &&  $option['ServiceLevel'] == 'U11'){
+                            $shippingOption['Rate'] = $option['Rate'];
+                            $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                            break;
+                        }
                         if (isset($option['Rate']) && $option['Rate'] <= $shippingOption['Rate'] || !$shippingOption['Rate']) {
                             $shippingOption['Rate'] = $option['Rate'];
                             $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
