@@ -218,12 +218,29 @@ class NewOrdersImport implements ToCollection
         }else{
             $content = "FILEHEADER;00;$store_id;$date;$newSequence\n$source_id;10;$FirstName;$LastName;$StreetLine1;$StreetLine2;$City;$StateName;$PostalCode;$PhoneNumber;Y;Info@thesuppliesnmore.com;;\n";
         }
+
+        $service_type = 'FedEx';
+        switch ($StateName) {
+            case 'AA':
+                $service_type = 'USPS';
+                $shipping_method = 'PRIO';
+                break;
+            case 'AE':
+                $service_type = 'USPS';
+                $shipping_method = 'PRIO';
+                break;
+            case 'AP':
+                $service_type = 'USPS';
+                $shipping_method = 'PRIO';
+                break;
+        }
+
         foreach ($items as $item) {
             $vendorSKU = $item['vendor_sku'];
             Log::info($vendorSKU);
             $shipping_method = $item['shipping_method'] ?? 'Grnd';
             $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);
-            $content .= "$source_id;20;$vendorSKU;$quantity;FedEx;$shipping_method\n";
+            $content .= "$source_id;20;$vendorSKU;$quantity;$service_type;$shipping_method\n";
             $total_quantity += $item['Qty'];
         }
         // return;
