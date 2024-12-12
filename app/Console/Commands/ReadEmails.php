@@ -59,13 +59,13 @@ class ReadEmails extends Command
                         'tracking_number' => $trackingNumber,
                     ];
                     Log::info('processing emails for order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
-                    $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber,'FedEx', $serviceType);
-                    if(!$res){
-                        Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber. ' at ' . $ship_date);
+                    $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber, 'FedEx', $serviceType);
+                    if (!$res) {
+                        Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
                         $message->setFlag(['Seen']);
                         continue;
                     }
-                } else if(!$orderId) {
+                } else if (!$orderId) {
                     preg_match('/Shipper Information\s*([\s\S]*?)Recipient Information\s*([\s\S]*?)Please do not respond/', $body, $infoMatches);
 
                     $shipperAndRecipientLines = isset($infoMatches[1]) ? $infoMatches[1] . "\n" . $infoMatches[2] : '';
@@ -73,37 +73,96 @@ class ReadEmails extends Command
                     // Splitting the combined shipper and recipient lines based on new lines
                     $lines = explode("\n", $shipperAndRecipientLines);
 
+                    // Combining lines for multi-line addresses
+                    $cleanedLines = [];
+                    $buffer = '';
+
+                    foreach ($lines as $line) {
+                        if (trim($line) === '') {
+                            continue; // Skip empty lines
+                        }
+
+                        if (preg_match('/\s{2,}/', $line)) {
+                            // If the line contains two or more spaces, it's a new row
+                            if ($buffer !== '') {
+                                $cleanedLines[] = $buffer;
+                                $buffer = ''; // Clear buffer for next row
+                            }
+                            $buffer = $line;
+                        } else {
+                            // Otherwise, append it to the current buffer (for multi-line addresses)
+                            $buffer .= ' ' . $line;
+                        }
+                    }
+
+                    if ($buffer !== '') {
+                        $cleanedLines[] = $buffer; // Add the last buffered row
+                    }
+
                     // Initializing arrays for shipper and recipient information
                     $shipperInfo = [];
                     $recipientInfo = [];
 
                     // Parsing each line to extract shipper and recipient columns
-                    foreach ($lines as $line) {
-                        // Splitting each line based on a consistent number of spaces or tab that separates shipper and recipient columns
-                        $columns = preg_split('/\s{2,}/', trim($line));
-
-                        if (count($columns) == 2) {
-                            $shipperInfo[] = trim($columns[0]);
-                            $recipientInfo[] = trim($columns[1]);
+                    foreach ($cleanedLines as $line) {
+                        // Match the shipper and recipient columns using two or more spaces as separator
+                        if (preg_match('/^(.*?)\s{2,}(.*?)$/', $line, $matches)) {
+                            $shipperInfo[] = trim($matches[1]);
+                            $recipientInfo[] = trim($matches[2]);
                         }
                     }
 
                     // Assigning the parsed values to individual variables
-                    $shipperName = $shipperInfo[0] ?? 'Not found';
-                    $shipperStreet = $shipperInfo[1] ?? 'Not found';
-                    $shipperCity = $shipperInfo[2] ?? 'Not found';
-                    $shipperState = $shipperInfo[3] ?? 'Not found';
-                    $shipperCountry = $shipperInfo[4] ?? 'Not found';
-                    $shipperPostal = $shipperInfo[5] ?? 'Not found';
+                    $shipperName = $shipperInfo[0] ?? '';
+                    $shipperStreet = $shipperInfo[1] ?? '';
+                    $shipperCity = $shipperInfo[2] ?? '';
+                    $shipperState = $shipperInfo[3] ?? '';
+                    $shipperCountry = $shipperInfo[4] ?? '';
+                    $shipperPostal = $shipperInfo[5] ?? '';
 
-                    $recipientName = $recipientInfo[0] ?? 'Not found';
-                    $recipientStreet = $recipientInfo[1] ?? 'Not found';
-                    $recipientCity = $recipientInfo[2] ?? 'Not found';
-                    $recipientState = $recipientInfo[3] ?? 'Not found';
-                    $recipientCountry = $recipientInfo[4] ?? 'Not found';
-                    $recipientPostal = $recipientInfo[5] ?? 'Not found';
+                    $recipientName = $recipientInfo[0] ?? '';
+                    $recipientStreet = $recipientInfo[1] ?? '';
+                    $recipientCity = $recipientInfo[2] ?? '';
+                    $recipientState = $recipientInfo[3] ?? '';
+                    $recipientCountry = $recipientInfo[4] ?? '';
+                    $recipientPostal = $recipientInfo[5] ?? '';
 
-                    $error_message = 'Missing PO Number For '. "\n\n\n\n" ."Tracking Number: ". ($trackingNumber ?? 'Not Found')."\n" . "Service Type: ". ($serviceType ?? 'Not Found') . "\n\n\n\n" . 'Shipper Information' . "\n" . 'Name: ' . $shipperName . "\n" . 'Street: ' . $shipperStreet . "\n" . 'City: ' . $shipperCity . "\n" . 'State: ' . $shipperState . "\n" . 'Country: ' . $shipperCountry . "\n" . 'Postal: ' . $shipperPostal . "\n\n\n\n" . 'Recipient Information' . "\n" . 'Name: ' . $recipientName . "\n" . 'Street: ' . $recipientStreet . "\n" . 'City: ' . $recipientCity . "\n" . 'State: ' . $recipientState . "\n" . 'Country: ' . $recipientCountry . "\n" . 'Postal: ' . $recipientPostal;
+                    // recipientPostal should get only first 5 characters
+                    $recipientPostal = substr($recipientPostal, 0, 5);
+                    $search_address = $recipientStreet . ' ' . $recipientCity . ', ' . $recipientState . ' ' . $recipientPostal;
+                    $normalized_search_address = preg_replace('/\s+/', ' ', $search_address);
+
+                    $dateFilter = Carbon::now()->subDays(3)->format('d-M-Y');
+
+                    $rsr_messages = $folder->messages()
+                        ->from('noreply@rsrgroup.com')
+                        ->unseen()
+                        ->since($dateFilter)
+                        ->get();
+
+                    foreach ($rsr_messages as $rsr_message) {
+                        $email_body = preg_replace('/\s+/', ' ', $rsr_message->getTextBody());
+                        if (stripos($email_body, $normalized_search_address) !== false) {
+                            preg_match('/PO #\s*:\s*(\d+)/', $email_body, $purchaseOrderMatches);
+                            $orderId = $purchaseOrderMatches[1] ?? null;
+                            break;
+                        }
+                    }
+
+                    if ($orderId) {
+                        $emailData[] = [
+                            'order_id' => $orderId,
+                            'tracking_number' => $trackingNumber,
+                        ];
+                        Log::info('processing emails for order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
+                        $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber, 'FedEx', $serviceType);
+                        if (!$res) {
+                            Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
+                            $message->setFlag(['Seen']);
+                        }
+                        continue;
+                    }
+                    $error_message = 'Missing PO Number For ' . "\n\n\n\n" . "Tracking Number: " . ($trackingNumber ?? 'Not Found') . "\n" . "Service Type: " . ($serviceType ?? 'Not Found') . "\n\n\n\n" . 'Shipper Information' . "\n" . 'Name: ' . $shipperName . "\n" . 'Street: ' . $shipperStreet . "\n" . 'City: ' . $shipperCity . "\n" . 'State: ' . $shipperState . "\n" . 'Country: ' . $shipperCountry . "\n" . 'Postal: ' . $shipperPostal . "\n\n\n\n" . 'Recipient Information' . "\n" . 'Name: ' . $recipientName . "\n" . 'Street: ' . $recipientStreet . "\n" . 'City: ' . $recipientCity . "\n" . 'State: ' . $recipientState . "\n" . 'Country: ' . $recipientCountry . "\n" . 'Postal: ' . $recipientPostal;
                     $sellerCloudService->sendEmail(null, [
                         'body' => $error_message,
                         'title' => 'Missing PO Number',
