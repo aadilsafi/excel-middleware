@@ -147,6 +147,7 @@ class ReadEmails extends Command
                             $orderId = $purchaseOrderMatches[1] ?? null;
                             break;
                         }
+                        $rsr_message->setFlag(['Seen']);
                     }
 
                     if ($orderId) {
