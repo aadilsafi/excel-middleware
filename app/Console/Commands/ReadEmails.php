@@ -35,7 +35,7 @@ class ReadEmails extends Command
             $client->connect();
 
             $folder = $client->getFolder('INBOX');
-            $messages = $folder->messages()->from('aadilxafii@gmail.com')->unseen()->get();
+            $messages = $folder->messages()->from('TrackingUpdates@fedex.com')->unseen()->get();
 
             $emailData = [];
             $sellerCloudService = new \App\Services\SellerCloudService();
