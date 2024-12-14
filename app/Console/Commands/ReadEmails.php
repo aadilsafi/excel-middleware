@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Order;
 use App\Services\SellerCloudService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -34,7 +35,7 @@ class ReadEmails extends Command
             $client->connect();
 
             $folder = $client->getFolder('INBOX');
-            $messages = $folder->messages()->from('TrackingUpdates@fedex.com')->unseen()->get();
+            $messages = $folder->messages()->from('aadilxafii@gmail.com')->unseen()->get();
 
             $emailData = [];
             $sellerCloudService = new \App\Services\SellerCloudService();
@@ -129,27 +130,13 @@ class ReadEmails extends Command
 
                     // recipientPostal should get only first 5 characters
                     $recipientPostal = substr($recipientPostal, 0, 5);
-                    $search_address = $recipientStreet . ' ' . $recipientCity . ', ' . $recipientState . ' ' . $recipientPostal;
-                    $normalized_search_address = preg_replace('/\s+/', ' ', $search_address);
+                    $normalized_search_address = preg_replace('/\s+/', ' ', $recipientStreet);
 
-                    $dateFilter = Carbon::now()->subDays(3)->format('d-M-Y');
+                    $dateFilter = Carbon::now()->subDays(3);
+                    $order = Order::where('updated_at','>=',$dateFilter)->where('address', $normalized_search_address)->first();
+                    $orderId = $order ? $order->order_id : null;
 
-                    $rsr_messages = $folder->messages()
-                        ->from('noreply@rsrgroup.com')
-                        ->unseen()
-                        ->since($dateFilter)
-                        ->get();
-
-                    foreach ($rsr_messages as $rsr_message) {
-                        $email_body = preg_replace('/\s+/', ' ', $rsr_message->getTextBody());
-                        if (stripos($email_body, $normalized_search_address) !== false) {
-                            preg_match('/PO #\s*:\s*(\d+)/', $email_body, $purchaseOrderMatches);
-                            $orderId = $purchaseOrderMatches[1] ?? null;
-                            break;
-                        }
-                        $rsr_message->setFlag(['Seen']);
-                    }
-
+                    dd($orderId);
                     if ($orderId) {
                         $emailData[] = [
                             'order_id' => $orderId,

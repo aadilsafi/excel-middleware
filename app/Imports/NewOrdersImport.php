@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Order;
+use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -278,6 +279,22 @@ class NewOrdersImport implements ToCollection
         }
         if ($ftp_file) {
             Log::info('file uploaded to FTP Order');
+            try{
+                Order::updateOrCreate( [
+                    'order_source_id' => $source_id,
+                    'vendor_id' => $store_id,
+                    'order_id' => $source_id,
+                ],[
+                    'order_source_id' => $source_id,
+                    'vendor_id' => $store_id,
+                    'order_id' => $source_id,
+                    'address' => $StreetLine1
+                ]);
+            }
+            catch(Exception $exception){
+                Log::info('Error in updating Order Model');
+                Log::info($exception->getMessage());
+            }
         } else {
             Log::info('file not uploaded to FTP Order');
             $sellerCloudService->sendEmail(null, [
