@@ -136,7 +136,6 @@ class ReadEmails extends Command
                     $order = Order::where('updated_at','>=',$dateFilter)->where('address', $normalized_search_address)->first();
                     $orderId = $order ? $order->order_id : null;
 
-                    dd($orderId);
                     if ($orderId) {
                         $emailData[] = [
                             'order_id' => $orderId,
