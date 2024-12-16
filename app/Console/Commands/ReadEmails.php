@@ -145,8 +145,8 @@ class ReadEmails extends Command
                         $res = $sellerCloudService->updateShipping($orderId, $ship_date, $trackingNumber, 'FedEx', $serviceType);
                         if (!$res) {
                             Log::error('Failed to update order id: ' . $orderId . ' and tracking number: ' . $trackingNumber . ' at ' . $ship_date);
-                            $message->setFlag(['Seen']);
                         }
+                        $message->setFlag(['Seen']);
                         continue;
                     }
                     $error_message = 'Missing PO Number For ' . "\n\n\n\n" . "Tracking Number: " . ($trackingNumber ?? 'Not Found') . "\n" . "Service Type: " . ($serviceType ?? 'Not Found') . "\n\n\n\n" . 'Shipper Information' . "\n" . 'Name: ' . $shipperName . "\n" . 'Street: ' . $shipperStreet . "\n" . 'City: ' . $shipperCity . "\n" . 'State: ' . $shipperState . "\n" . 'Country: ' . $shipperCountry . "\n" . 'Postal: ' . $shipperPostal . "\n\n\n\n" . 'Recipient Information' . "\n" . 'Name: ' . $recipientName . "\n" . 'Street: ' . $recipientStreet . "\n" . 'City: ' . $recipientCity . "\n" . 'State: ' . $recipientState . "\n" . 'Country: ' . $recipientCountry . "\n" . 'Postal: ' . $recipientPostal;
