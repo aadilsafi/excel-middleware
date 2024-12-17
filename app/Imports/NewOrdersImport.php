@@ -221,6 +221,7 @@ class NewOrdersImport implements ToCollection
         }
 
         $service_type = 'FedEx';
+        $shipping_method = null;
         switch ($StateName) {
             case 'AA':
                 $service_type = 'USPS';
@@ -239,7 +240,7 @@ class NewOrdersImport implements ToCollection
         foreach ($items as $item) {
             $vendorSKU = $item['vendor_sku'];
             Log::info($vendorSKU);
-            $shipping_method = $item['shipping_method'] ?? 'Grnd';
+            $shipping_method = $shipping_method ?? ($item['shipping_method'] ?? 'Grnd');
             $quantity = str_pad($item['Qty'], 5, '0', STR_PAD_LEFT);
             $content .= "$source_id;20;$vendorSKU;$quantity;$service_type;$shipping_method\n";
             $total_quantity += $item['Qty'];
