@@ -316,4 +316,35 @@ class SeawideService
             return (object)$shippingOption;
         }
     }
+
+    public function GetShippingOptionsAll($FullPartNo, $zipcode = null,$quantity = 1)
+    {
+        $shippingOption = [
+            'ServiceLevel' => null,
+            'Rate' => null,
+        ];
+        try {
+
+            $this->params->FullPartNo = $FullPartNo;
+            $this->params->ToZip = $zipcode;
+            $this->params->Quantity = $quantity;
+
+            $response = $this->client->__soapCall('GetShippingOptionsWithQuantity', [$this->params]);
+            // Extract the XML from the response
+
+            $xml = $response->GetShippingOptionsWithQuantityResult->any;
+
+            // Load the XML string into a SimpleXMLElement object
+            $xmlObject = simplexml_load_string($xml);
+
+            // Decode the JSON to an associative array
+            $responseArray = json_decode(json_encode($xmlObject), true);
+            $responseArray = $responseArray['ShippingOptions'];
+
+
+            return (object)$responseArray;
+        } catch (\Exception $e) {
+            return (object)$shippingOption;
+        }
+    }
 }
