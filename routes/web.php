@@ -19,15 +19,27 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-// Route::get('test-import', function () {
-//     $sellercloudService = new \App\Services\SellerCloudService();
-//     // get file from storage
-//     $file = Storage::disk('local')->path('ex/test.csv');
-//     $file_content = base64_encode(file_get_contents($file));
+Route::get('test-import', function () {
+    $seawideService = new \App\Services\SeawideService();
+    $res = $seawideService->GetShippingOptionsAll('A141009904','04619')->Rates;
+    $res = collect($res);
+    return response()->json($res->pluck('Rate','ServiceLevel'));
+    dd($res->pluck('Rate','ServiceLevel'));
+    $rates = [];
+    foreach($res as $r){
+        $rates[] = $r['ServiceLevel'];
+    }
+    return response()->json($rates);
 
-//     // convert file
-//     dd($sellercloudService->ImportProducts($file_content));
-// });
+    dd('die');
+    $sellercloudService = new \App\Services\SellerCloudService();
+    // get file from storage
+    $file = Storage::disk('local')->path('ex/test.csv');
+    $file_content = base64_encode(file_get_contents($file));
+
+    // convert file
+    dd($sellercloudService->ImportProducts($file_content));
+});
 // Route::get('test', function () {
 //     // $spreadsheet = IOFactory::load(public_path('test.txt'));
 //     $filePath = public_path('test.txt'); // Replace with your file's actual path
