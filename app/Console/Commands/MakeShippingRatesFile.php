@@ -40,10 +40,12 @@ class MakeShippingRatesFile extends Command
         $rows = $sheet->toArray(null, true, true, true); // Parse rows
         $headerRow = array_shift($rows); // Extract header row
         $chunkedRows = array_chunk($rows, length: 50); // Chunk rows into groups of 50
-        foreach ($chunkedRows as $chunk) {
-            MakeShippingRateFileJob::dispatch($headerRow, $chunk)
-                ->onQueue('excel-file'); // Dispatch job for each chunk
-        }
+        MakeShippingRateFileJob::dispatch($headerRow, $rows)
+        ->onQueue('excel-file'); // Dispatch job for each chunk
+        // foreach ($chunkedRows as $chunk) {
+        //     MakeShippingRateFileJob::dispatch($headerRow, $chunk)
+        //         ->onQueue('excel-file'); // Dispatch job for each chunk
+        // }
 
         $this->info("All rows have been queued for processing.");
     }
