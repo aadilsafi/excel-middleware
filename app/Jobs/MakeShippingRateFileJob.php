@@ -38,19 +38,9 @@ class MakeShippingRateFileJob implements ShouldQueue
      */
     public function handle()
     {
-        $key = 'api-call-limit'; // Unique rate limiter key
         $modifiedData = [];
 
         foreach ($this->rows as $row) {
-            // Check rate limit
-            if (RateLimiter::tooManyAttempts($key, 50)) {
-                // Wait before retrying
-                $this->release(60); // Retry after 60 seconds
-                return;
-            }
-
-            // Record the API call attempt
-            RateLimiter::hit($key, 60); // 60-second expiration
 
             // Call the API
             $response = $this->callAPI($row);
