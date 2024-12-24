@@ -22,6 +22,7 @@ class MakeShippingRateFileJob implements ShouldQueue
     protected $rows;
 
     public $timeout = 0;
+    public $tries = 0;
 
     /**
      * Create a new job instance.
