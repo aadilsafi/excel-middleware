@@ -24,6 +24,8 @@ class MakeShippingRateFileJob implements ShouldQueue
     public $timeout = 0;
     public $tries = 0;
 
+    public $retryAfter = 60;
+
     /**
      * Create a new job instance.
      */
@@ -82,6 +84,8 @@ class MakeShippingRateFileJob implements ShouldQueue
                 Log::info($ex);
                 Log::info($row['A']);
                 Log::info('an error occured while processing the api call');
+                throw new \RuntimeException('API call failed, retrying...');
+
             }
         }
 
