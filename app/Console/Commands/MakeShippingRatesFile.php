@@ -56,7 +56,6 @@ class MakeShippingRatesFile extends Command
             MakeShippingRateFileJob::dispatch($headerRow, $chunk)
                 ->delay(now()->addSeconds(60))
                 ->onQueue('excel-file'); // Dispatch job for each chunk
-                break;
         }
 
         $this->info("All rows have been queued for processing.");
