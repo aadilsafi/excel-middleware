@@ -47,13 +47,25 @@ class MakeShippingRateFileJob implements ShouldQueue
             // Call the API
             $response = $this->callAPI($row);
             if ($response) {
-                foreach (array_keys($response) as $serviceLevel) {
-                    if (!in_array($serviceLevel, $this->headerRow)) {
-                        $this->headerRow[] = $serviceLevel; // Add new service level to headers
-                    }
-                }
                 // Build the row data based on the header
-                $rowData = $this->buildRowData($this->headerRow, $row, $response);
+                // $rowData = $this->buildRowData($this->headerRow, $row, $response);
+                $rowData = [];
+                $rowData[] = $row['A'] ?? ''; // Value for VCPN
+                $rowData[] = $row['B'] ?? ''; // Value for CaseQty
+                $rowData[] = $response['UPM'] ?? '';
+                $rowData[] = $response['U11'] ?? '';
+                $rowData[] = $response['U09'] ?? '';
+                $rowData[] = $response['U02'] ?? '';
+                $rowData[] = $response['U15'] ?? '';
+                $rowData[] = $response['U19'] ?? '';
+                $rowData[] = $response['U52'] ?? '';
+                $rowData[] = $response['U03'] ?? '';
+                $rowData[] = $response['U13'] ?? '';
+                $rowData[] = $response['U55'] ?? '';
+                $rowData[] = $response['U53'] ?? '';
+                $rowData[] = $response['LTL'] ?? '';
+
+                // Add row data to modified data
                 $modifiedData[] = $rowData;
             }
         }

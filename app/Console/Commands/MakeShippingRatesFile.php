@@ -39,11 +39,24 @@ class MakeShippingRatesFile extends Command
         // Parse the file data
         $rows = $sheet->toArray(null, true, true, true); // Parse rows
         $headerRow = array_shift($rows); // Extract header row
+        $headerRow[] ='UPM';
+        $headerRow[] ='U11';
+        $headerRow[] ='U09';
+        $headerRow[] ='U02';
+        $headerRow[] ='U15';
+        $headerRow[] ='U19';
+        $headerRow[] ='U52';
+        $headerRow[] ='U03';
+        $headerRow[] ='U13';
+        $headerRow[] ='U55';
+        $headerRow[] ='U53';
+        $headerRow[] ='LTL';
         $chunkedRows = array_chunk($rows, length: 50); // Chunk rows into groups of 50
         foreach ($chunkedRows as $chunk) {
             MakeShippingRateFileJob::dispatch($headerRow, $chunk)
                 ->delay(now()->addSeconds(60))
                 ->onQueue('excel-file'); // Dispatch job for each chunk
+                break;
         }
 
         $this->info("All rows have been queued for processing.");
