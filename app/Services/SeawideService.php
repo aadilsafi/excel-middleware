@@ -198,7 +198,8 @@ class SeawideService
         $DropShipPhone,
         $PONumber,
         $partNumberQuantity,
-        $partNumberQuantityShipping
+        $partNumberQuantityShipping,
+        $order = null
     ) {
         Log::info('multi part start');
         Log::info('Seawide Processing order => ' . $FullPartNo);
@@ -209,7 +210,11 @@ class SeawideService
             if (strlen($DropShipPostalCode) >= 5) {
                 $zipcode =  substr($DropShipPostalCode, 0, 5);
             }
-            $shippingOptions = $this->GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping);
+            $shippingOptions = $this->GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping,$order);
+            if(!isset($shippingOptions->ServiceLevel)){
+                // throw exception for unable to find shipping option for the order
+                throw new Exception('Unable To find shipping option',406);
+            }
             Log::info(\json_encode('shipping options multipart drop ship => '.$shippingOptions->ServiceLevel));
             $this->params->FullPartNo = $FullPartNo;
             $this->params->Quant = $Quant;
@@ -267,11 +272,14 @@ class SeawideService
             $sellerCloudService = new SellerCloudService();
             $sellerCloudService->sendEmail(null, ['heading' => 'Error on Seawide', 'body' => 'Error on Seawide Order ID is => ' . $PONumber . ' ' . $e->getMessage(), 'title' => 'Seawide error']);
             Log::info('multi part end');
+            if($e->getCode() == 406){
+                return 'No Shipping Option';
+            }
             return false;
         }
     }
 
-    public function GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping)
+    public function GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping,$order = null)
     {
         $shippingOption = [
             'ServiceLevel' => null,
@@ -295,24 +303,59 @@ class SeawideService
             $responseArray = $responseArray['ShippingOptions'];
 
             Log::info('shipping options from get => '.\json_encode($responseArray));
+            $shipping_method = $order['shipping_method_seawide']; // FreeEconomy | NextDay | Expedited
+            $shipping_override = $order['shipping_override_seawide'];
+
+                // Define allowed service levels for each shipping method
+            $allowed_service_levels = [
+                'FreeEconomy' => ['U11', 'U09', 'U02', 'U15', 'U19', 'U52', 'U03', 'U13', 'U55', 'U53'],
+                'Standard' => ['U11', 'U09', 'U02', 'U15', 'U19', 'U52', 'U03', 'U13', 'U55', 'U53'],
+                'Expedited' => ['U09', 'U02', 'U15', 'U19', 'U52', 'U03', 'U13', 'U55', 'U53'],
+                'SecondDay' => ['U02', 'U15', 'U52', 'U03', 'U13', 'U55', 'U53'],
+                'NextDay' => ['U03', 'U13', 'U55', 'U53']
+            ];
+
             if (isset($responseArray['Rates'])) {
                 $rates = $responseArray['Rates'];
-                if (isset($rates[0]) && is_array($rates[0])) {
-                    // Case 1: Rates is an array of rate objects
-                    foreach ($responseArray['Rates'] as $option) {
-                        if (isset($option['Rate']) && $option['Rate'] <= $shippingOption['Rate'] || !$shippingOption['Rate']) {
-                            $shippingOption['Rate'] = $option['Rate'];
-                            $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                $shippingOption = ['Rate' => null, 'ServiceLevel' => null];
+
+
+                // If shipping_override is set, use it directly
+                if (!empty($shipping_override)) {
+                    if (isset($rates[0]) && is_array($rates[0])) {
+                        foreach ($rates as $option) {
+                            if ($option['ServiceLevel'] === $shipping_override) {
+                                $shippingOption['Rate'] = $option['Rate'];
+                                $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                                break;
+                            }
                         }
+                    } elseif ($rates['ServiceLevel'] === $shipping_override) {
+                        $shippingOption['Rate'] = $rates['Rate'];
+                        $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
                     }
-                } else {
-                    $shippingOption['Rate'] = $rates['Rate'];
-                    $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
+                }
+                // If no shipping_override, find cheapest rate among allowed service levels
+                else {
+                    $allowed_levels = $allowed_service_levels[$shipping_method] ?? [];
+
+                    if (isset($rates[0]) && is_array($rates[0])) {
+                        foreach ($rates as $option) {
+                            if (in_array($option['ServiceLevel'], $allowed_levels) &&
+                                ($shippingOption['Rate'] === null || $option['Rate'] < $shippingOption['Rate']))
+                            {
+                                $shippingOption['Rate'] = $option['Rate'];
+                                $shippingOption['ServiceLevel'] = $option['ServiceLevel'];
+                            }
+                        }
+                    } elseif (in_array($rates['ServiceLevel'], $allowed_levels)) {
+                        $shippingOption['Rate'] = $rates['Rate'];
+                        $shippingOption['ServiceLevel'] = $rates['ServiceLevel'];
+                    }
                 }
             }
-
             return (object)$shippingOption;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return (object)$shippingOption;
         }
     }

@@ -68,6 +68,8 @@ class NewOrdersImport implements ToCollection
                 'Qty' => $is_kit ? $row[15] : $row[4],
                 'vendor_sku' => $is_kit ? $row[16] : $row[6],
                 'shipping_method' => $shipping_method,
+                'shipping_method_seawide' => $row[17],
+                'shipping_override_seawide' => $row[18],
             ]);
         }
 
@@ -116,6 +118,9 @@ class NewOrdersImport implements ToCollection
                 Log::info('Vendor is Seawide');
                 $vendor_sku = $order['items'][0]['vendor_sku'];
                 $res =  $this->seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber, $vendor_sku, $total_quantity);
+                if(is_string($res) && $res == 'No Shipping Option'){
+                    continue;
+                }
                 if (!$res) {
                     Log::info('Vendor is  Seawide but items are not present');
                     $sellerCloudService->sendEmail(null, [
@@ -181,6 +186,7 @@ class NewOrdersImport implements ToCollection
             Log::info('partNumber Not Found ' . $partNumberQuantity);
             return false;
         }
+        $order = $items[0];
         $data = $seawideService->ShipOrderDropShipMultiparts(
             $FullPartNo,
             $Quant,
@@ -195,7 +201,8 @@ class NewOrdersImport implements ToCollection
             $DropShipPhone,
             $PONumber,
             $partNumberQuantity,
-            $partNumberQuantityShipping
+            $partNumberQuantityShipping,
+            $order
         );
         return $data;
     }
