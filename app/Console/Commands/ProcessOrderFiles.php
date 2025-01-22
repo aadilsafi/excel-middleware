@@ -90,7 +90,9 @@ class ProcessOrderFiles extends Command
                     // Mail::to('test@test.com')->send(new FilesReport($attachment));
                 }
                 Storage::disk('local')->delete($file);
-                Storage::disk('rsr')->delete($file);
+                // disabled deleting rsr files
+                // TODO:
+                // Storage::disk('rsr')->delete($file);
             }
 
 
