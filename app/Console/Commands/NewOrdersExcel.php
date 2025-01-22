@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Imports\NewOrdersImport;
 use App\Services\SellerCloudService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +53,13 @@ class NewOrdersExcel extends Command
                     \Storage::disk('local')->put('orderImports/' . $attachmentName, $attachmentContent);
                     $file = Storage::disk('local')->path('orderImports/'.$attachmentName);
                     Excel::import(new NewOrdersImport, $file);
+                    try{
+                    \Storage::disk('local')->delete('orderImports/'.$attachmentName);
+                    }
+                    catch(Exception $ex){
+                        Log::info('failed to delete new orders excel');
+                    }
+
                 }
                 $message->setFlag(['Seen']);
                 Log::info('Attachment processed and email marked as read.');
