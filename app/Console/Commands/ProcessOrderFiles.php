@@ -92,7 +92,7 @@ class ProcessOrderFiles extends Command
                 Storage::disk('local')->delete($file);
                 // disabled deleting rsr files
                 // TODO:
-                // Storage::disk('rsr')->delete($file);
+                Storage::disk('rsr')->delete($file);
             }
 
 
