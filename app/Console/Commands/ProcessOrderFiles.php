@@ -38,6 +38,7 @@ class ProcessOrderFiles extends Command
             }
 
             foreach ($files as $file) {
+                $delete = true;
                 $filePath = storage_path('app/' . $file);
                 $ftp_file = Storage::disk('rsr')->get($file);
                 Log::info('processing order file :'.$filePath);
@@ -54,10 +55,12 @@ class ProcessOrderFiles extends Command
                 if (strpos($filePath, 'ECONF') !== false) {
                     // Just delete
                 } else if (\strpos($filePath, 'ESHIP') !== false) {
+                    $delete = false;
                     $tracker = $this->getTracking($file_content);
                     $tracking_number = $tracker[0];
                     $invoice_number  = $tracker[1];
                     $order_id = $tracker[2];
+                    $is_usps = $tracker[3] ?? false;
                     // $order_id = Order::where('order_source_id', $source_id)->first()->order_id;
                     // Output the extracted data
                     if ($tracking_number && $invoice_number) {
@@ -75,7 +78,7 @@ class ProcessOrderFiles extends Command
                         }
                         $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
                         // last column is warehouse id default is 255 for RSR Dropship
-                        $res = $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number);
+                        $res = $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number,);
                         if(!$res){
                             Log::error('Failed to update order id: ' . $order_id . ' and tracking number: ' . $tracking_number. ' at ' . $ship_date);
                             continue;
@@ -92,7 +95,9 @@ class ProcessOrderFiles extends Command
                 Storage::disk('local')->delete($file);
                 // disabled deleting rsr files
                 // TODO:
-                Storage::disk('rsr')->delete($file);
+                if($delete){
+                    Storage::disk('rsr')->delete($file);
+                }
             }
 
 
@@ -117,8 +122,15 @@ class ProcessOrderFiles extends Command
         $trackingNumber = '';
         $invoiceNumber = '';
         $orderId = '';
+        $is_usps = false;
         // Loop through each line and find the relevant data
         foreach ($lines as $line) {
+            $parts = explode(';', $line);
+
+            if (count($parts) >= 10 && $parts[8] === 'USP' && $parts[9] === 'PRIO') {
+                $is_usps = true;
+            }
+
             if ($is_error) {
                 if (strpos($line, ';90;') !== false) {
                     $parts = explode(';', $line);
@@ -138,6 +150,6 @@ class ProcessOrderFiles extends Command
             }
         }
 
-        return [$trackingNumber, $invoiceNumber, $orderId];
+        return [$trackingNumber, $invoiceNumber, $orderId, $is_usps];
     }
 }

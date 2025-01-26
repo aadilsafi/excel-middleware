@@ -38,6 +38,7 @@ class ProcessOrderFilesSecondary extends Command
             }
 
             foreach ($files as $file) {
+                $delete = true;
                 $filePath = storage_path('app/' . $file);
                 $ftp_file = Storage::disk('secondary_rsr')->get($file);
                 Log::info('RSR 67883 processing order file :'.$filePath);
@@ -54,6 +55,7 @@ class ProcessOrderFilesSecondary extends Command
                 if (strpos($filePath, 'ECONF') !== false) {
                     // Just delete
                 } else if (\strpos($filePath, 'ESHIP') !== false) {
+                    $delete = false;
                     $tracker = $this->getTracking($file_content);
                     $tracking_number = $tracker[0];
                     $invoice_number  = $tracker[1];
@@ -90,7 +92,9 @@ class ProcessOrderFilesSecondary extends Command
                     // Mail::to('test@test.com')->send(new FilesReport($attachment));
                 }
                 Storage::disk('local')->delete($file);
-                Storage::disk('secondary_rsr')->delete($file);
+                if($delete){
+                    Storage::disk('secondary_rsr')->delete($file);
+                }
             }
 
 
