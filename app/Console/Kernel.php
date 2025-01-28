@@ -22,6 +22,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('process-seawide-orders')->everyTwoHours()->withoutOverlapping();
         $schedule->command('app:new-orders-excel')->everyThirtyMinutes()->withoutOverlapping();
         $schedule->command('delete-old-orders')->dailyAt('13:50')->withoutOverlapping();
+        $schedule->command('app:process-eship rsr')->dailyAt('02:10')->withoutOverlapping();
+        $schedule->command('app:process-eship secondary_rsr')->dailyAt('02:30')->withoutOverlapping();
+
     }
 
     /**
