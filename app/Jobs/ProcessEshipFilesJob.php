@@ -36,7 +36,10 @@ class ProcessEshipFilesJob implements ShouldQueue
 
             $file_content = Storage::disk($this->ftpName)->get($this->file);
             $this->processEshipContent($file_content);
-
+            if (Storage::disk($this->ftpName)->exists($this->file)) {
+                Storage::disk($this->ftpName)->delete($this->file);
+                Log::info("Successfully deleted file from {$this->ftpName} FTP: {$this->file}");
+            }
         } catch (\Exception $e) {
             Log::error('ProcessEshipFilesJob failed: ' . $e->getMessage());
             throw $e;
@@ -111,19 +114,5 @@ class ProcessEshipFilesJob implements ShouldQueue
         Log::error('ProcessEshipFilesJob failed for file: ' . $this->file, [
             'exception' => $exception->getMessage()
         ]);
-    }
-
-    public function __destruct()
-    {
-        try {
-            if (Storage::disk($this->ftpName)->exists($this->file)) {
-                Storage::disk($this->ftpName)->delete($this->file);
-                Log::info("Successfully deleted file from {$this->ftpName} FTP: {$this->file}");
-            }
-        } catch (\Exception $e) {
-            Log::error("Failed to delete file from FTP: {$this->file}", [
-                'error' => $e->getMessage()
-            ]);
-        }
     }
 }
