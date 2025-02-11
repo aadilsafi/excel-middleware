@@ -69,12 +69,12 @@ class ProcessOrderFilesSecondary extends Command
                         Log::info('RSR 67883 Tracking : ' . $invoice_number);
 
                         // Get date from file name
-                        preg_match('/(\d{8})/', basename($file), $matches);
-                        if (isset($matches[1])) {
-                            $file_date = Carbon::createFromFormat('Ymd', $matches[1]);
-                        } else {
-                            $file_date = Carbon::now();
-                        }
+                        // preg_match('/(\d{8})/', basename($file), $matches);
+                        // if (isset($matches[1])) {
+                        //     $file_date = Carbon::createFromFormat('Ymd', $matches[1]);
+                        // } else {
+                        // }
+                        $file_date = Carbon::now();
                         $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
                         // last column is warehouse id default is 255 for RSR Dropship
                         $res = $sellerCloudService->updateShipping($order_id, $ship_date, $tracking_number);
