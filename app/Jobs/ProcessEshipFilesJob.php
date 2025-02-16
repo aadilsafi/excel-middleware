@@ -62,7 +62,8 @@ class ProcessEshipFilesJob implements ShouldQueue
 
             Log::info('Processing OrderID: ' . $order_id . ' with Tracking: ' . $tracking_number);
 
-            $ship_date = $this->getShipDateFromFileName($this->file);
+            $file_date = Carbon::now();
+            $ship_date = Carbon::parse($file_date)->format('Y-m-d\TH:i:s.v\Z');
             $success = $sellerCloudService->updateShipping(
                 $order_id,
                 $ship_date,
