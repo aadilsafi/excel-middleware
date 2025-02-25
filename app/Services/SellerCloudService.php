@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\FilesReport;
 use App\Services\Interfaces\SellerCloudInterface;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
@@ -165,4 +166,34 @@ class SellerCloudService implements SellerCloudInterface
     //         return false;
     //     }
     // }
+
+    public function updateInventory($file_content,$file_extension="txt", $warehouse_id = 260)
+    {
+        try {
+            $date = Carbon::now()->format('m/d/Y h:i A');
+            $response = $this->client->put($this->baseUrl . "Inventory/ImportPhysicalInventory", [
+                'headers' => $this->headers,
+                'json' => [
+                    "UpdateType" => 0,
+                    "FileContent" => $file_content,
+                    "Format" => 0,
+                    // "FileExtension" => $file_extension,
+                    "WarehouseID" => $warehouse_id,
+                    "InventoryDate"=> $date,
+                    "MergeDefaultWarehouseInventoryIntoShadowParent" => true
+
+                ],
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            $this->sendEmail(null, [
+                'body' => 'Unable to update kinseys inventory',
+                'title' => "Unable to update kinseys inventory",
+                'heading' => "Unable to update kinseys inventory",
+            ]);
+            return false;
+        }
+    }
 }

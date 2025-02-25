@@ -81,6 +81,20 @@ return [
             'ssl'        => true,
             'timeout' => 800,
         ],
+        'kinseys' => [
+            'driver' => 'ftp',
+            'host' => env('KINSEYS_HOST'),
+            'username' => env('KINSEYS_USERNAME'),
+            'password' => env('KINSEYS_PASSWORD'),
+
+            // Optional RSR settings...
+            'port' => (int) env('KINSEYS_PORT', 21),
+            'root' => env('KINSEYS_ROOT', '/'),
+            'passive'    => true,
+            'ssl'        => false,
+            'timeout' => 800,
+        ],
+
 
     ],
 
