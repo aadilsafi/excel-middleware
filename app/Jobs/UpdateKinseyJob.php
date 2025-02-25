@@ -69,15 +69,19 @@ class UpdateKinseyJob implements ShouldQueue
             $header = "ProductID\tWarehouse\tPhysicalInventoryQty\tInventoryDate\tLocationNotes";
             fwrite($file, $header . PHP_EOL);
             // Extract and write data
+            $sellercloudService = new \App\Services\SellerCloudService();
+
             foreach ($result['Products'] as $item) {
                 $upc = str_pad((string) $item['upc'], 12, "0", STR_PAD_LEFT); // Ensure 12-digit UPC
                     $qtyAvailable = (int) $item['quantityOnHand'] ?? 0;
                     $warehouse = "kinseys"; // Fixed value
                     $inventoryDate = ""; // Empty
                     $locationNotes = ""; // Empty
+                    $price = (float) $item['price'] ?? 0;
 
                     $line = "$upc\t$warehouse\t$qtyAvailable\t$inventoryDate\t$locationNotes";
                     fwrite($file, $line . PHP_EOL);
+                    $sellercloudService->updateProduct($upc,$price);
             }
 
             foreach ($result['notMatching'] as $item) {
@@ -95,7 +99,6 @@ class UpdateKinseyJob implements ShouldQueue
             fclose($file);
 
             // get csv file content
-            $sellercloudService = new \App\Services\SellerCloudService();
             $file_content = base64_encode(file_get_contents($txtPath));
             $sellercloudService->updateInventory($file_content);
 

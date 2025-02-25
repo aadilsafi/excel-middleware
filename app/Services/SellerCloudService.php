@@ -196,4 +196,22 @@ class SellerCloudService implements SellerCloudInterface
             return false;
         }
     }
+    public function updateProduct ($product_id,$site_cost)
+    {
+        try {
+            Log::info('Updating product id: ' . $product_id . ' with site cost: ' . $site_cost);
+            $response = $this->client->put($this->baseUrl . "Catalog/BasicInfo", [
+                'headers' => $this->headers,
+                'json' => [
+                    "ProductID" => $product_id,
+                    "SiteCost" => $site_cost
+                ],
+            ]);
+            return true;
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            Log::info('Failed to update product id: ' . $product_id . ' with site cost: ' . $site_cost);
+            return false;
+        }
+    }
 }
