@@ -135,12 +135,17 @@ class NewOrdersImport implements ToCollection
             } elseif ($order['vendor_name'] == 'RSR Dropship  67883') {
                 Log::info('Vendor is RSR Dropship  67883');
                 $this->rsrOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber,'67883');
-            } else {
-                Log::info('Vendor is not RSR and Seawide');
+            }
+            elseif ($order['vendor_name'] == 'Kinseys Inc.') {
+                Log::info('Vendor is Kinseys Inc.');
+                $this->kinseyOrder($items,$source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber);
+            }
+             else {
+                Log::info('Vendor is not RSR and Seawide and Kinsey');
                 $sellerCloudService->sendEmail(null, [
-                    'body' => 'This Order is not from RSR and Seawide Vendor Order ID is => ' . $source_id,
-                    'title' => 'Not RSR and Seawide Order',
-                    'heading' => 'Not RSR and Seawide Order',
+                    'body' => 'This Order is not from RSR and Seawide and Kinsey Vendor Order ID is => ' . $source_id,
+                    'title' => 'Not RSR and Seawide and Kinsey Order',
+                    'heading' => 'Not RSR and Seawide and Kinsey Order',
                 ]);
             }
         }
@@ -310,6 +315,51 @@ class NewOrdersImport implements ToCollection
                 'title' => "RSR ".$store_id == 67883 ? '(67883)' : ''." File not Uploaded to FTP for Order Id = " . $source_id,
                 'heading' => "RSR ".$store_id == 67883 ? '(67883)' : ''." File not Uploaded to FTP for Order Id = " . $source_id,
             ]);
+        }
+    }
+    public function kinseyOrder($items,$source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $ZipCode, $PhoneNumber)
+    {
+        $fullName = $FirstName . ' ' . $LastName;
+        $salesLine = [];
+        foreach ($items as $item) {
+            $salesLine[] = [
+                        "ProductID" => (string) $item['vendor_sku'],
+                        "Quantity" => (string) $item['Qty']
+            ];
+        }
+
+        $kinseyService = new \App\Services\KinseyService();
+        $response = $kinseyService->createSalesOrder($source_id,$salesLine,$fullName,$StreetLine1,$StreetLine2,$City,$StateName,$ZipCode,$PhoneNumber);
+        if(!$response){
+            Log::info('Failed to create sales order on Kinseys');
+        }
+        else{
+            if (isset($response['salesOrders']) && is_array($response['salesOrders'])) {
+                foreach ($response['salesOrders'] as $salesOrder) {
+                    // Check if we have order lines
+                    if (isset($salesOrder['orderLines']) && is_array($salesOrder['orderLines'])) {
+                        foreach ($salesOrder['orderLines'] as $orderLine) {
+                            // Check if status is not 7200
+                            if (isset($orderLine['status']) && $orderLine['status'] !== 7200) {
+                                // Log the information
+                                Log::info(
+                                    "Order issue detected",
+                                    [
+                                        'sales_order_no' => $salesOrder['salesOrderNo'] ?? 'Unknown',
+                                        'product_id' => $orderLine['productID'] ?? 'Unknown',
+                                        'quantity' => $orderLine['qtyOrd'] ?? 0,
+                                        'status' => $orderLine['status'] ?? 'Unknown',
+                                        'message' => $orderLine['message'] ?? 'No message provided'
+                                    ]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            Log::info('Successfully created sales order on Kinseys');
+
         }
     }
 }

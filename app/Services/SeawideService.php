@@ -66,6 +66,7 @@ class SeawideService
 
             return (object)['tracking_num' => $tracking_num, 'date' => $date, 'shipping_method' => $shipping_method];
         } catch (\Exception $e) {
+            Log::info('GetOrderHistory Error => ' . $e->getMessage());
             return (object)['tracking_num' => $tracking_num, 'date' => $date, 'shipping_method' => $shipping_method];
         }
     }

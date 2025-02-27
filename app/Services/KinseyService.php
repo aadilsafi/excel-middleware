@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+
 class KinseyService
 {
     public function getProducts()
@@ -82,6 +83,46 @@ class KinseyService
         } catch (Exception $e) {
             Log::error('Kinsey API Error: ' . $e->getMessage());
             return collect([]);
+        }
+    }
+    public function createSalesOrder($PONumber, $salesLine, $name, $address1, $address2, $city, $state, $zipcode, $phone, $warehouse = '')
+    {
+        $country = 'US';
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY' => env('KINSEYS_KEY'),
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->post('https://api.kinseysinc.com/v2/SalesOrder', [
+                "PurchaseOrderNo" => (string) $PONumber,
+                "PrimaryWarehouse" => $warehouse,
+                "Comment" => "",
+                "Options" => [
+                    "BackOrdersAllowed" => false,
+                    "SplitOrdersAllowed" => false
+                ],
+                "ShipTo" => [
+                    "Name" => $name,
+                    "Address" => $address1,
+                    "Address2" => $address2,
+                    "City" => $city,
+                    "State" => $state,
+                    "ZipCode" => (string) $zipcode,
+                    "Country" => $country,
+                    "Phone" => $phone,
+                ],
+                "SalesLines" => $salesLine
+            ]);
+
+            if ($response->status() == 200) {
+                return $response->json();
+            } else {
+                Log::error('Failed to create kinsey sales order: ' . json_encode($response->json()));
+                return false;
+            }
+        } catch (Exception $ex) {
+            Log::error('Failed to create kinsey sales order: ' . json_encode($ex->getMessage()));
+            return false;
         }
     }
 }
