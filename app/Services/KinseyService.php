@@ -129,4 +129,24 @@ class KinseyService
             return false;
         }
     }
+    public function getShipments($PONumber)
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY' => env('KINSEYS_KEY'),
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->get('https://api.kinseysinc.com/v2/shipments/'.$PONumber);
+
+            if ($response->status() == 200) {
+                return $response->json();
+            } else {
+                Log::error('Failed to fetch shipments: ' . json_encode($response->json()));
+                return false;
+            }
+        } catch (Exception $ex) {
+           Log::error('Failed to fetch shipments: ' . json_encode($ex->getMessage()));
+            return false;
+        }
+    }
 }

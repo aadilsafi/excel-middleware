@@ -329,6 +329,15 @@ class NewOrdersImport implements ToCollection
         }
 
         $kinseyService = new \App\Services\KinseyService();
+        Order::updateOrCreate([
+            'order_source_id' => $source_id,
+            'vendor_id' => 16344,
+            'order_id' => $source_id,
+        ], [
+            'order_source_id' => $source_id,
+            'vendor_id' => 16344,
+            'order_id' => $source_id,
+        ]);
         $response = $kinseyService->createSalesOrder($source_id,$salesLine,$fullName,$StreetLine1,$StreetLine2,$City,$StateName,$ZipCode,$PhoneNumber);
         if(!$response){
             Log::info('Failed to create sales order on Kinseys');
