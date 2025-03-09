@@ -219,21 +219,13 @@ class NewOrdersImport implements ToCollection
         // quantity with the leading zeros if needed
         $quantity = str_pad(1, 5, '0', STR_PAD_LEFT);
         $total_quantity = 0;
-        if($store_id == '67883'){
-            $sequence = DB::table('order_sequences')->lockForUpdate()->latest()->first();
-            $newSequence = $sequence->current_sequence + 1;
-            $newSequence >= 9999 ? 0001 : $newSequence;
-            $sequence->update(['current_sequence' => $newSequence]);
 
+        $sequence = DB::table('order_sequences')->lockForUpdate()->first();
 
-        }else{
-            $sequence = DB::table('order_sequences')->lockForUpdate()->first();
-            $newSequence = $sequence->current_sequence + 1;
-            $newSequence >= 9999 ? 0001 : $newSequence;
-            $sequence->update(['current_sequence' => $newSequence]);
-        }
+        $newSequence = $sequence->current_sequence + 1;
+        $newSequence >= 9999 ? 0001 : $newSequence;
 
-
+        DB::table('order_sequences')->update(['current_sequence' => $newSequence]);
 
         $newSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
         if($store_id == '67883'){
