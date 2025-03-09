@@ -222,12 +222,14 @@ class NewOrdersImport implements ToCollection
         if($store_id == '67883'){
             $sequence = DB::table('order_sequences')->lockForUpdate()->latest()->first();
             $newSequence = $sequence->current_sequence + 1;
+            $newSequence >= 9999 ? 0001 : $newSequence;
             $sequence->update(['current_sequence' => $newSequence]);
 
 
         }else{
             $sequence = DB::table('order_sequences')->lockForUpdate()->first();
             $newSequence = $sequence->current_sequence + 1;
+            $newSequence >= 9999 ? 0001 : $newSequence;
             $sequence->update(['current_sequence' => $newSequence]);
         }
 
