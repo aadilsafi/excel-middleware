@@ -285,6 +285,8 @@ class NewOrdersImport implements ToCollection
 
         // Upload the file to FTP
         // check if the file is uploaded
+        Log::info('file content rsr ');
+        Log::info(\json_encode($fileContent));
         if($store_id == '67883'){
             $ftp_file = Storage::disk('secondary_rsr')->put($ftpPath, $fileContent);
         }else{
