@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:process-eship rsr')->dailyAt('02:10')->withoutOverlapping();
         $schedule->command('app:process-eship secondary_rsr')->dailyAt('02:30')->withoutOverlapping();
         $schedule->command('app:update-kinsey')->twiceDaily(0, 6)->withoutOverlapping();
-        $schedule->command('app:update-tracking-kinsey')->twiceDaily(1, 7)->withoutOverlapping();
+        $schedule->command('app:update-tracking-kinsey')->everyTwoHours()->withoutOverlapping();
     }
 
     /**
