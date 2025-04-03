@@ -118,14 +118,14 @@ class KinseyService
                 return $response->json();
             } else {
                 $sellerCloudService = new SellerCloudService();
-                $sellerCloudService->sendEmail(null, ['heading' => 'Failed to create Kinsey Sales Order', 'body' => 'Failed to create Kinsey Sales Order: ' . json_encode($response->json()), 'title' => 'Failed to create Kinsey Sales Order']);
-                Log::error('Failed to create kinsey sales order: ' . json_encode($response->json()));
+                $sellerCloudService->sendEmail(null, ['heading' => 'Failed to create Kinsey Sales Order', 'body' => 'Failed to create Kinsey Sales Order: PO Number # '. $PONumber.' ' . json_encode($response->json()), 'title' => 'Failed to create Kinsey Sales Order']);
+                Log::error('Failed to create kinsey sales order: PO Number # '. $PONumber.' ' . json_encode($response->json()));
                 return false;
             }
         } catch (Exception $ex) {
             $sellerCloudService = new SellerCloudService();
-            $sellerCloudService->sendEmail(null, ['heading' => 'Failed to create Kinsey Sales Order', 'body' => 'Failed to create Kinsey Sales Order: ' . json_encode($ex->getMessage()), 'title' => 'Failed to create Kinsey Sales Order']);
-            Log::error('Failed to create kinsey sales order: ' . json_encode($ex->getMessage()));
+            $sellerCloudService->sendEmail(null, ['heading' => 'Failed to create Kinsey Sales Order', 'body' => 'Failed to create Kinsey Sales Order: PO Number # '. $PONumber.' ' . json_encode($ex->getMessage()), 'title' => 'Failed to create Kinsey Sales Order']);
+            Log::error('Failed to create kinsey sales order: PO Number # '. $PONumber.' ' . json_encode($ex->getMessage()));
             return false;
         }
     }
