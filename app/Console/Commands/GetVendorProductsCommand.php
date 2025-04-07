@@ -27,6 +27,6 @@ class GetVendorProductsCommand extends Command
     public function handle()
     {
         $vendor_id = $this->vendorId = $this->argument('vendorId');
-        \dispatch(new GetVendorProducts($vendor_id));
+        \dispatch(new GetVendorProducts($vendor_id))->onQueue('products');
     }
 }
