@@ -31,6 +31,6 @@ class UpdateKinsey extends Command
     public function handle()
     {
         // dispatch kinsey job
-        \dispatch(new \App\Jobs\UpdateKinseyJob()->onQueue('kinsey'));
+        \dispatch(new \App\Jobs\UpdateKinseyJob())->onQueue('kinsey');
     }
 }
