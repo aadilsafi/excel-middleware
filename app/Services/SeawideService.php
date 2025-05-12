@@ -212,6 +212,15 @@ class SeawideService
                 $zipcode =  substr($DropShipPostalCode, 0, 5);
             }
             $shippingOptions = $this->GetShippingOptionsMultipleParts($zipcode,$partNumberQuantityShipping,$order);
+            // street line 1 starts with combo of PO box then select shipping method as UPM
+            // po box
+            // p.o. box
+            // pobox
+            // p.o.b.
+            // check in both cases if it small letter or capital letter
+            if(preg_match('/^(p\.?o\.? ?box|pobox|po box|p\.?o\.?b\.)/i', $DropShipAddress1)){
+                $shippingOptions->ServiceLevel = 'UPM';
+            }
             if(!isset($shippingOptions->ServiceLevel)){
                 // throw exception for unable to find shipping option for the order
                 throw new Exception('Unable To find shipping option',406);
