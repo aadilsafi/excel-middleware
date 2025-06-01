@@ -153,7 +153,9 @@ class NewOrdersImport implements ToCollection
     public function seawideOrder($items, $source_id, $FirstName, $LastName, $StreetLine1, $StreetLine2, $City, $StateName, $PostalCode, $PhoneNumber, $FullPartNo, $total_quantity)
     {
         $seawideService = new \App\Services\SeawideService();
+        $sellerCloudService = new \App\Services\SellerCloudService();
 
+        try{
         Order::updateOrCreate([
             'order_source_id' => $FullPartNo,
             'vendor_id' => 15080,
@@ -164,6 +166,17 @@ class NewOrdersImport implements ToCollection
             'vendor_id' => 15080,
             'order_id' => $source_id,
         ]);
+        }catch(Exception $ex){
+            Log::info('Error in updating Order Model');
+            Log::info($source_id);
+            Log::info($ex->getMessage());
+            $sellerCloudService->sendEmail(null, [
+                'body' => "Seawide failed to create Order on db for order id : " . $FullPartNo ?? ($source_id ?? '-'),
+                'title' => "Seawide failed to create Order on db for Order Id = " . $FullPartNo ?? ($source_id ?? '-'),
+                'heading' => "Seawide failed to create Order on db for Order Id = " . $FullPartNo ?? ($source_id ?? '-'),
+            ]);
+            return;
+        }
 
         $Quant  = $total_quantity;
         $DropShipFirstName = $FirstName;
@@ -310,7 +323,14 @@ class NewOrdersImport implements ToCollection
             }
             catch(Exception $exception){
                 Log::info('Error in updating Order Model');
+                Log::info($source_id);
                 Log::info($exception->getMessage());
+                $sellerCloudService->sendEmail(null, [
+                    'body' => "RSR ".$store_id == 67883 ? '(67883)' : ''." failed to create Order on db for order id : " . $source_id,
+                    'title' => "RSR ".$store_id == 67883 ? '(67883)' : ''." failed to create Order on db for Order Id = " . $source_id,
+                    'heading' => "RSR ".$store_id == 67883 ? '(67883)' : ''." failed to create Order on db for Order Id = " . $source_id,
+                ]);
+
             }
         } else {
             Log::info('file not uploaded to FTP Order');
@@ -333,6 +353,9 @@ class NewOrdersImport implements ToCollection
         }
 
         $kinseyService = new \App\Services\KinseyService();
+        $sellerCloudService = new \App\Services\SellerCloudService();
+
+        try{
         Order::updateOrCreate([
             'order_source_id' => $source_id,
             'vendor_id' => 16344,
@@ -342,6 +365,17 @@ class NewOrdersImport implements ToCollection
             'vendor_id' => 16344,
             'order_id' => $source_id,
         ]);
+        }catch(Exception $ex){
+            Log::info('Error in updating Order Model');
+            Log::info($source_id);
+            Log::info($ex->getMessage());
+            $sellerCloudService->sendEmail(null, [
+                'body' => "Kinseys failed to create Order on db for order id : " . $source_id,
+                'title' => "Kinseys failed to create Order on db for Order Id = " . $source_id,
+                'heading' => "Kinseys failed to create Order on db for Order Id = " . $source_id,
+            ]);
+            return;
+        }
         $response = $kinseyService->createSalesOrder($source_id,$salesLine,$fullName,$StreetLine1,$StreetLine2,$City,$StateName,$ZipCode,$PhoneNumber);
         if(!$response){
             Log::info('Failed to create sales order on Kinseys');
