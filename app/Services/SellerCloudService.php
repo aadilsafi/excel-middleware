@@ -20,20 +20,11 @@ class SellerCloudService implements SellerCloudInterface
     private $headers;
     private $token;
     private $client;
+    private $maxRetries = 2;
 
     public function __construct()
     {
-
-        // Vendors/15073/products?model.pageNumber=1&model.pageSize=100
-        try {
-            $this->initializeToken();
-            $products = $this->getProducts();
-        } catch (Exception $ex) {
-        }
-    }
-
-    public function initializeToken()
-    {
+        Log::info('inside constructor');
         $this->baseUrl = 'https://ci.api.sellercloud.com/rest/api/';
         $this->username = env('SELLER_CLOUD_USERNAME');
         $this->password = env('SELLER_CLOUD_PASSWORD');
@@ -41,37 +32,121 @@ class SellerCloudService implements SellerCloudInterface
             'Content-Type' => 'application/json',
         ];
         $this->client = new Client();
-        $this->token = Cache::remember('seller_cloud_token', 2000, function () {
+
+        // Don't initialize token or make API calls in constructor
+        // Just set up the basic properties
+    }
+
+    /**
+     * Get a valid token, refreshing if necessary
+     */
+    private function getValidToken()
+    {
+        Log::info('inside get valid token');
+        // Try to get cached token first
+        $this->token = Cache::get('seller_cloud_token');
+
+        // If no token in cache, get a new one
+        if (!$this->token) {
+            $this->refreshToken();
+        }
+
+        // Update headers with current token
+        $this->headers['Authorization'] = 'Bearer ' . $this->token;
+
+        return $this->token;
+    }
+
+    /**
+     * Force refresh the token
+     */
+    private function refreshToken()
+    {
+        Log::info('inside refresh token');
+        try {
+            Log::info(message: 'Refreshing SellerCloud token');
             $response = $this->client->post($this->baseUrl . 'token', [
-                'headers' => $this->headers,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
                 'json' => [
                     'Username' => $this->username,
                     'Password' => $this->password,
                 ],
             ]);
 
-            return json_decode($response->getBody(), true)['access_token'];
-        });
-        $this->headers = Arr::add($this->headers, 'Authorization', 'Bearer ' . $this->token);
+            $this->token = json_decode($response->getBody(), true)['access_token'];
+
+            // Cache for slightly less than the typical expiry time (2000 minutes)
+            Cache::put('seller_cloud_token', $this->token, now()->addMinutes(2000));
+
+            return $this->token;
+        } catch (Exception $e) {
+            Log::error('Failed to refresh SellerCloud token: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Execute an API request with token retry logic
+     */
+    private function executeRequest($method, $endpoint, $options = [], $retryCount = 0)
+    {
+        Log::info('inside execution');
+        // Ensure we have a valid token before making the request
+        $this->getValidToken();
+
+        // Make sure headers are in the options
+        if (!isset($options['headers'])) {
+            $options['headers'] = $this->headers;
+        }
+
+        try {
+            $response = $this->client->$method($this->baseUrl . $endpoint, $options);
+            return $response;
+        } catch (Exception $e) {
+            // Check if it's a token error and we haven't exceeded max retries
+            if ($retryCount < $this->maxRetries &&
+                (strpos($e->getMessage(), '401') !== false ||
+                 strpos($e->getMessage(), 'Invalid token') !== false)) {
+
+                Log::warning('Token error detected, refreshing and retrying. Attempt: ' . ($retryCount + 1));
+
+                // Force token refresh
+                Cache::forget('seller_cloud_token');
+                $this->refreshToken();
+
+                // Update headers in options
+                if (isset($options['headers'])) {
+                    $options['headers']['Authorization'] = 'Bearer ' . $this->token;
+                } else {
+                    $options['headers'] = $this->headers;
+                }
+                // Retry the request
+                return $this->executeRequest($method, $endpoint, $options, $retryCount + 1);
+            }
+
+            // If we've reached max retries or it's not a token issue, throw the exception
+            throw $e;
+        }
     }
     public function getProducts($pageNumber = 1, $pageSize = 100, $vendorId = 15073)
     {
         // pass bearer token
         try {
-            $response = $this->client->get($this->baseUrl . "Vendors/$vendorId/products?model.pageNumber=$pageNumber&model.pageSize=$pageSize", [
+            $response = $this->executeRequest('get', "Vendors/$vendorId/products?model.pageNumber=$pageNumber&model.pageSize=$pageSize", [
                 'headers' => $this->headers,
             ]);
 
             return json_decode($response->getBody(), true)['Items'];
         } catch (Exception $e) {
-            Cache::forget('seller_cloud_token');
-            $this->initializeToken();
+            Log::error('Failed to get products: ' . $e->getMessage());
             return [];
         }
     }
     public function getOrder()
     {
-        $response = $this->client->get($this->baseUrl . "Orders?model.pageNumber=1&model.pageSize=100", [
+        $response = $this->executeRequest('get', "Orders?model.pageNumber=1&model.pageSize=100", [
             'headers' => $this->headers,
         ]);
 
@@ -80,7 +155,7 @@ class SellerCloudService implements SellerCloudInterface
     public function updateShipping($order_id, $ship_date, $tracking_number, $carrier_name = 'FedEx', $shipping_method = 'FedEx 2Day', $warehouses_id = 255)
     {
         try {
-            $response = $this->client->put($this->baseUrl . "Orders/ShippingStatus/SinglePackage", [
+            $response = $this->executeRequest('put',"Orders/ShippingStatus/SinglePackage", [
                 'headers' => $this->headers,
                 'json' => [
                     'OrderID' => $order_id,
@@ -171,7 +246,7 @@ class SellerCloudService implements SellerCloudInterface
     {
         try {
             $date = Carbon::now()->format('m/d/Y h:i A');
-            $response = $this->client->put($this->baseUrl . "Inventory/ImportPhysicalInventory", [
+            $response = $this->executeRequest('put', "Inventory/ImportPhysicalInventory", [
                 'headers' => $this->headers,
                 'json' => [
                     "UpdateType" => 0,
@@ -200,7 +275,7 @@ class SellerCloudService implements SellerCloudInterface
     {
         try {
             Log::info('Updating product id: ' . $product_id . ' with site cost: ' . $site_cost);
-            $response = $this->client->put($this->baseUrl . "Catalog/BasicInfo", [
+            $response = $this->executeRequest('put', "Catalog/BasicInfo", [
                 'headers' => $this->headers,
                 'json' => [
                     "ProductID" => $product_id,

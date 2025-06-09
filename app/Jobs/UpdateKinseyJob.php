@@ -29,6 +29,7 @@ class UpdateKinseyJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            Log::info('inside Update Kinsey Job');
             // $xmlPath = storage_path('app/kinsey/kin-inv.xml');
             $txtPath = storage_path('app/kinsey/inventory.txt'); // Output file
             $products = Product::where('VendorID', 16344)->pluck('ProductSKU')->toArray();
@@ -64,7 +65,7 @@ class UpdateKinseyJob implements ShouldQueue
 
             // Open output file
             $file = fopen($txtPath, 'w');
-
+            Log::info('file open');
             // Define header row
             $header = "ProductID\tWarehouse\tPhysicalInventoryQty\tInventoryDate\tLocationNotes";
             fwrite($file, $header . PHP_EOL);
@@ -72,6 +73,7 @@ class UpdateKinseyJob implements ShouldQueue
             $sellercloudService = new \App\Services\SellerCloudService();
 
             foreach ($result['Products'] as $item) {
+                Log::info('inside Update Kinsey Job first loop');
                 $upc = str_pad((string) $item['upc'], 12, "0", STR_PAD_LEFT); // Ensure 12-digit UPC
                     $qtyAvailable = (int) $item['quantityOnHand'] ?? 0;
                     $warehouse = "kinseys"; // Fixed value
@@ -85,6 +87,7 @@ class UpdateKinseyJob implements ShouldQueue
             }
 
             foreach ($result['notMatching'] as $item) {
+                Log::info('inside Update Kinsey Job second loop');
                 $upc = str_pad((string) $item, 12, "0", STR_PAD_LEFT); // Ensure 12-digit UPC
                     $qtyAvailable = 0;
                     $warehouse = "kinseys"; // Fixed value
@@ -97,7 +100,7 @@ class UpdateKinseyJob implements ShouldQueue
 
 
             fclose($file);
-
+            Log::info('file close');
             // get csv file content
             $file_content = base64_encode(file_get_contents($txtPath));
             $sellercloudService->updateInventory($file_content);
