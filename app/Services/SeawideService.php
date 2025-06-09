@@ -218,7 +218,7 @@ class SeawideService
             // pobox
             // p.o.b.
             // check in both cases if it small letter or capital letter
-            if(preg_match('/^(p\.?o\.? ?box|pobox|po box|p\.?o\.?b\.)/i', $DropShipAddress1)){
+            if(preg_match('/\b(p\.?o\.?\s?box|po\sbox|p\.?o\.?\.?b\.)\b/i', $DropShipAddress1)){
                 $shippingOptions->ServiceLevel = 'UPM';
             }
             if(!isset($shippingOptions->ServiceLevel)){
