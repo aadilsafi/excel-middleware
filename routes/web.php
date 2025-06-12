@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EmailController;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,17 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+Route::get('test', function () {
+    $seawideService = new \App\Services\SeawideService();
+//     $sellercloudService = new \App\Services\SellerCloudService();
+//     $upc = '026509000259';
+//     $price =  18.940;
+//    dd( $sellercloudService->updateProduct($upc,$price));
+
+    $data = $seawideService->GetOrderHistory(7040909);
+    dd($data);
+});
 // Route::get('test-import', function () {
 //     $seawideService = new \App\Services\SeawideService();
 //     $res = $seawideService->GetShippingOptionsAll('A141009904','04619')->Rates;
