@@ -110,6 +110,10 @@ class OpenAIService
         $specs = [];
 
         foreach ($lines as $line) {
+            // Skip Lines if its N/A or empty
+            if (empty($line) || stripos($line, 'N/A') !== false) {
+                continue;
+            }
             if (stripos($line, 'UPC:') === false) {
                 $specs[] = $line;
             }
@@ -190,7 +194,19 @@ I am building a professional eCommerce catalog. Please return a high-quality, SE
 - [concise feature or benefit]
 
 **Key Specs:**
-
+Include technical and physical specifications relevant to shoppers, such as:
+Material
+Build
+Power Source
+Carry Style
+Output
+Size
+Compatibility
+Orientation (if applicable)
+Modes (if applicable)
+Country of Origin (if known)
+Etc.
+the max characters length for each spec is 50-80 characters only.
 - **[Spec Label]:** [Value]
 - **[Spec Label]:** [Value]
 - (Minimum 6, up to 12 relevant specs — no UPC here)
