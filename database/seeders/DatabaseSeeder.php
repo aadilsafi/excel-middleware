@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\User::factory()->create([
             'name' => 'Admin User',
             'email' => 'sales@thesuppliesnmore.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('248!SellerCloud'),
         ]);
     }
 }
