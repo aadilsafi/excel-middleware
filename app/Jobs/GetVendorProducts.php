@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Product;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,13 +30,17 @@ class GetVendorProducts implements ShouldQueue
     {
         $sellerCloudService = new \App\Services\SellerCloudService();
         $pageNumber = 1;
+        $fetchedProductSKUs = [];
+
         do {
             $products = $sellerCloudService->getProducts($pageNumber,100,$this->vendor_id);
             if(!$products || count($products) <= 0){
                 break;
             }
+
             foreach ($products as $product) {
-                \App\Models\Product::updateOrCreate(
+                $fetchedProductSKUs[] = $product['ProductSKU'];
+                Product::updateOrCreate(
                     ['ProductSKU' => $product['ProductSKU']],
                     [
                         'VendorID' => $product['VendorID'],
@@ -53,5 +58,12 @@ class GetVendorProducts implements ShouldQueue
             }
             $pageNumber++;
         } while (count($products) > 0);
+
+        // Delete products that weren't in the fetched list
+        if ($this->vendor_id) {
+            Product::where('VendorID', $this->vendor_id)
+                ->whereNotIn('ProductSKU', $fetchedProductSKUs)
+                ->delete();
+        }
     }
 }
