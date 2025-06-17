@@ -13,7 +13,7 @@
         "laravel/tinker": "^2.8",
         "league/flysystem-ftp": "^3.28",
         "maatwebsite/excel": "^3.1",
-        "openai-php/client": "^0.13.0",
+        "openai-php/client": "*",
         "webklex/laravel-imap": "^5.3"
     },
     "require-dev": {
