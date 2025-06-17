@@ -102,11 +102,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 //     return response()->download($outputPath)->deleteFileAfterSend(true);
 // });
 
-Route::get('fetch-products', function () {
-    // run job
-    \App\Jobs\GetVendorProducts::dispatch();
-});
+// Route::get('fetch-products', function () {
+//     // run job
+//     \App\Jobs\GetVendorProducts::dispatch();
+// });
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
