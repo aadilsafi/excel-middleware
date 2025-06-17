@@ -102,11 +102,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 //     return response()->download($outputPath)->deleteFileAfterSend(true);
 // });
 
-// Route::get('fetch-products', function () {
-//     // run job
-//     \App\Jobs\GetVendorProducts::dispatch();
-// });
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/download-csv/{job}', [App\Http\Controllers\CsvDownloadController::class, 'download'])
+    ->name('download.csv')
+    ->middleware('auth');
