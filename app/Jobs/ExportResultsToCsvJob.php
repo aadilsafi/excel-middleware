@@ -85,11 +85,13 @@ class ExportResultsToCsvJob implements ShouldQueue
             'Meta Description',
             'Product Description',
             'Bullet Points',
-            'Key Specs',
+            // 'Key Specs',
             'Main Category',
             'Subcategory',
             'Type Category',
             'Keywords',
+            'Product Highlights',
+            // 'Additional Specs',
             'Status',
             'Error Message',
             'Processed At'
@@ -100,7 +102,7 @@ class ExportResultsToCsvJob implements ShouldQueue
         // Data rows
         foreach ($results as $result) {
             $data = $result->openai_response['data'] ?? [];
-            
+
             $row = [
                 $result->row_number,
                 $result->manufacturer,
@@ -110,11 +112,13 @@ class ExportResultsToCsvJob implements ShouldQueue
                 $data['meta_description'] ?? '',
                 $data['product_description'] ?? '',
                 isset($data['bullet_points']) ? implode('; ', $data['bullet_points']) : '',
-                isset($data['key_specs']) ? implode('; ', $data['key_specs']) : '',
+                // isset($data['key_specs']) ? implode('; ', $data['key_specs']) : '',
                 $data['main_category'] ?? '',
                 $data['subcategory'] ?? '',
                 $data['type_category'] ?? '',
                 isset($data['keywords']) ? implode(', ', $data['keywords']) : '',
+                isset($data['product_highlights']) ? implode('; ', $data['product_highlights']) : '',
+                // isset($data['additional_specs']) ? implode('; ', $data['additional_specs']) : '',
                 $result->status,
                 $result->error_message ?? '',
                 $result->processed_at ? $result->processed_at->format('Y-m-d H:i:s') : ''
