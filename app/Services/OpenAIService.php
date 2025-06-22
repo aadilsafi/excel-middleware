@@ -104,7 +104,7 @@ class OpenAIService
     }
 
     // Bullet Points
-    if (preg_match('/\*\*Bullet Points:\*\*\n(.*?)\n\n\*\*Key Specs:/s', $response, $match)) {
+    if (preg_match('/\*\*Bullet Points:\*\*\n(.*?)\n\n\*\*Main Category:/s', $response, $match)) {
         $bullets = array_filter(array_map('trim', explode("\n", $match[1])));
         $raw['bullet_points'] = $bullets;
     }
