@@ -16,8 +16,6 @@ class InventoryQuantityUpdateExport implements FromArray, WithHeadings
 
     public function array(): array
     {
-        \Log::info('Export array content', ['data' => $this->data]);
-
         return array_map(function ($item) {
             // Ensure all values are plain data (not arrays)
             return [
