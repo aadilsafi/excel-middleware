@@ -16,8 +16,20 @@ class SeawideService
 
     public function __construct()
     {
+        ini_set('default_socket_timeout', 2000);
+
         $endpoint = 'https://order.ekeystone.com/wselectronicorder/electronicorder.asmx?wsdl';
-        $this->client = new SoapClient($endpoint, ['trace' => 1, 'exceptions' => 1]);
+        // $this->client = new SoapClient($endpoint, ['trace' => 1, 'exceptions' => 1]);
+            $this->client = new SoapClient($endpoint, [
+        'trace' => 1,
+        'exceptions' => 1,
+        'connection_timeout' => 2000,
+        'stream_context' => stream_context_create([
+            'http' => [
+                'timeout' => 2000,
+            ]
+        ]),
+    ]);
         $this->params = new stdClass();
         $this->params->Key = env('SEAWIDE_KEY');
         $this->params->FullAccountNo = env('SEAWIDE_FULLACCOUNTNO');
@@ -400,4 +412,44 @@ class SeawideService
             return (object)$shippingOption;
         }
     }
+    public function GetInventoryFull()
+    {
+        $response = $this->client->__soapCall('GetInventoryFull', [$this->params]);
+        // Extract the XML from the response
+
+        $xml = $response->GetInventoryFullResult->any;
+        // Load the XML string into a SimpleXMLElement object
+        $xmlObject = simplexml_load_string($xml);
+
+        $responseArray = json_decode(json_encode($xmlObject), true);
+        return (object)$responseArray;
+
+    }
+    public function GetInventoryUpdates()
+    {
+        $response = $this->client->__soapCall('GetInventoryUpdates', [$this->params]);
+        // Extract the XML from the response
+
+        $xml = $response->GetInventoryUpdatesResult->any;
+        // Load the XML string into a SimpleXMLElement object
+        $xmlObject = simplexml_load_string($xml);
+
+        $responseArray = json_decode(json_encode($xmlObject), true);
+        return (object)$responseArray;
+
+    }
+    public function GetInventoryQuantityUpdates()
+    {
+        $response = $this->client->__soapCall('GetInventoryQuantityUpdates', [$this->params]);
+        // Extract the XML from the response
+
+        $xml = $response->GetInventoryQuantityUpdatesResult->any;
+        // Load the XML string into a SimpleXMLElement object
+        $xmlObject = simplexml_load_string($xml);
+
+        $responseArray = json_decode(json_encode($xmlObject), true);
+        return (object)$responseArray;
+
+    }
+
 }

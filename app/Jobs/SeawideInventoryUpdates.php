@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Exports\InventoryUpdateExport;
+use App\Services\SeawideService;
+use App\Services\SellerCloudService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+
+class SeawideInventoryUpdates implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $seawideService = new SeawideService();
+        $res = $seawideService->GetInventoryUpdates();
+
+        $rawTable = $res->InventoryUpdates['Table'] ?? [];
+        if(empty($rawTable) || count($rawTable) <= 0){
+            Log::info('Seawide Inventory Quantity Updates empty response');
+            return;
+        }
+        $fileName = 'inventory-updates-' . now()->format('Ymd_His') . '.xlsx';
+        $tempPath = storage_path("app/temp/$fileName");
+
+        // Ensure the temp directory exists
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0777, true);
+        }
+
+        Excel::store(new InventoryUpdateExport($rawTable), "temp/$fileName");
+        $fileContent = file_get_contents($tempPath);
+
+        // Prepare file data
+        $fileData = [
+            'name' => $fileName,
+            'content' => $fileContent
+        ];
+        $sellerCloudService = new SellerCloudService();
+        $sellerCloudService->sendEmail($fileData, [
+        'title' => 'Inventory Update Report',
+        'heading' => 'Latest Inventory Quantities',
+        'body' => 'Attached is the latest inventory quantity update Excel report.'
+        ]);
+        unlink($tempPath);
+        Log::info('Inventory Update Email sent via Zapier.');
+    }
+}

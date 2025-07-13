@@ -16,7 +16,7 @@ class ExportResultsToCsvJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 300; // 5 minutes timeout
+    public $timeout = 0; // 5 minutes timeout
 
     private ExcelProcessingJob $processingJob;
 
