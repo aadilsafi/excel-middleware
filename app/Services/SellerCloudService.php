@@ -180,6 +180,7 @@ class SellerCloudService implements SellerCloudInterface
     public function sendEmail(
         $file = null,
         $data = ['body' => '', 'heading' => '', 'title' => ''],
+        $subject = 'Seller Cloud Automation Error'
     ) {
         // Render the view content
         $emailContent = view('emails.files_report', [
@@ -202,9 +203,14 @@ class SellerCloudService implements SellerCloudInterface
             $email_setup[] = [
                 'name'     => 'attachment',
                 'contents' => $file_content,
-                'filename' => $file['name']
+                'filename' => $file['name'],
+                'subject' => $subject
             ];
         }
+        $email_setup[] =   [
+            'name'     => 'subject',
+            'contents' => $subject
+        ];
         $response = $this->client->post('https://hooks.zapier.com/hooks/catch/19222741/23hglr5/', [
             'multipart' => $email_setup
         ]);

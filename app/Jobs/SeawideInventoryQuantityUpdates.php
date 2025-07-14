@@ -33,8 +33,12 @@ class SeawideInventoryQuantityUpdates implements ShouldQueue
         $seawideService = new SeawideService();
         $res = $seawideService->GetInventoryQuantityUpdates();
         $rawTable = $res->InventoryUpdates['Table'] ?? [];
-        if(empty($rawTable) || count($rawTable) <= 0){
+        if (empty($rawTable) || count($rawTable) <= 0) {
             Log::info('Seawide Inventory Quantity Updates empty response');
+            // schedule the job again for 30 minutes later
+            self::dispatch(/* pass necessary data */)
+                ->delay(now()->addMinutes(30));
+            Log::info('Seawide Inventory Quantity Updates job rescheduled for 30 minutes later');
             return;
         }
         $fileName = 'inventory-quantity-updates-' . now()->format('Ymd_His') . '.xlsx';
@@ -55,13 +59,11 @@ class SeawideInventoryQuantityUpdates implements ShouldQueue
         ];
         $sellerCloudService = new SellerCloudService();
         $sellerCloudService->sendEmail($fileData, [
-        'title' => 'Inventory Update Report',
-        'heading' => 'Latest Inventory Quantities',
-        'body' => 'Attached is the latest inventory quantity update Excel report.'
-        ]);
+            'title' => 'Inventory Update Report',
+            'heading' => 'Latest Inventory Quantities',
+            'body' => 'Attached is the latest inventory quantity update Excel report.'
+        ], 'Latest SeaWide Inventory Quantities');
         unlink($tempPath);
         Log::info('Inventory Quantity Update Email sent via Zapier.');
-
-
     }
 }
