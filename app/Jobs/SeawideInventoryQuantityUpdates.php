@@ -36,8 +36,8 @@ class SeawideInventoryQuantityUpdates implements ShouldQueue
         if (empty($rawTable) || count($rawTable) <= 0) {
             Log::info('Seawide Inventory Quantity Updates empty response');
             // schedule the job again for 30 minutes later
-            self::dispatch(/* pass necessary data */)
-                ->delay(now()->addMinutes(30));
+            // self::dispatch(/* pass necessary data */)
+            //     ->delay(now()->addMinutes(30));
             Log::info('Seawide Inventory Quantity Updates job rescheduled for 30 minutes later');
             return;
         }
