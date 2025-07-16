@@ -28,7 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:update-kinsey')->twiceDaily(5, 13)->withoutOverlapping();
         $schedule->command('app:update-tracking-kinsey')->everyTwoHours()->withoutOverlapping();
         // $schedule->command('seawide-inventory-quantity-updates')->cron('45 9,13,17,21 * * *');
-        $schedule->command('seawide-inventory-quantity-updates')->everyTwoHours()->withoutOverlapping();
+        $schedule->command('seawide-inventory-quantity-updates')->hourlyAt(45)->withoutOverlapping();
     }
 
     /**
